@@ -24,12 +24,15 @@ interface mapObject{
   type: string;
   label: string;
   content: string;
+  rate: string; //If it is initial message, then it will have rate
   connectedBy: mapObject[];
   connectedTo: mapObject[];
 }
 
 function generateCode(mapObjects) {
   const nodes = mapObjects.filter(obj => obj.type !== 'Connection');
+
+  // Will edges/arrows have any information attached?
   const edges = mapObjects.filter(obj => obj.type === 'Connection');
 
   let code = '';
@@ -42,11 +45,18 @@ function generateCode(mapObjects) {
       case 'Decoder':
         code += model.add_node(${node.content}, label="${node.label}");\n;
         break;
+      case 'Message':
+        break;
+      case 'encodedMessage':
+        break;
+      case 'decodedMessage':
+        break;
       // Add more cases as needed
     }
   });
 
   edges.forEach(edge => {
+    // Connect each connectedBy and connectedTo with an edge
     const fromNode = nodes.find(node => node.objectId === edge.connectedBy[0].objectId);
     const toNode = nodes.find(node => node.objectId === edge.connectedTo[0].objectId);
     if (fromNode && toNode) {
