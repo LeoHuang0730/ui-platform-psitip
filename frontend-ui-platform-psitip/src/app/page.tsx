@@ -1,78 +1,122 @@
+'use client';
 import Image from "next/image";
 import styles from "./page.module.css";
 import {
   Box,
   Typography,
 } from "@mui/material";
+import { 
+  ReactFlow, 
+  Background, 
+  Controls, 
+  Position
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { useState } from "react";
 
-export default function Home() {
-  return (
-    <Box className={styles.page}>
-      <Box className={styles.main}>
-        <Typography variant="h1">
-          UI Platform for PSITIP 
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
-
-/*
-
-interface mapObject{
+interface mapNode {
   objectId: string;
   type: string;
   label: string;
   content: string;
-  rate: string; //If it is initial message, then it will have rate
-  connectedBy: mapObject[];
-  connectedTo: mapObject[];
+  rate?: string;
+  connectedBy: string[];
+  connectedTo: string[];
 }
 
-function generateCode(mapObjects) {
-  const nodes = mapObjects.filter(obj => obj.type !== 'Connection');
-
-  // Will edges/arrows have any information attached?
-  const edges = mapObjects.filter(obj => obj.type === 'Connection');
-
-  let code = '';
-
-  nodes.forEach(node => {
-    switch (node.type) {
-      case 'Encoder':
-        code += model.add_node(${node.content}, label="${node.label}");\n;
-        break;
-      case 'Decoder':
-        code += model.add_node(${node.content}, label="${node.label}");\n;
-        break;
-      case 'Message':
-        break;
-      case 'encodedMessage':
-        break;
-      case 'decodedMessage':
-        break;
-      // Add more cases as needed
-    }
-  });
-
-  edges.forEach(edge => {
-    // Connect each connectedBy and connectedTo with an edge
-    const fromNode = nodes.find(node => node.objectId === edge.connectedBy[0].objectId);
-    const toNode = nodes.find(node => node.objectId === edge.connectedTo[0].objectId);
-    if (fromNode && toNode) {
-      code += model.add_edge(${fromNode.content}, ${toNode.content});\n;
-    }
-  });
-
-  return code;
+interface mapEdge {
+  id: string;
+  source: string;
+  target: string;
 }
 
-// Example usage
-const mapObjects = [
-  // Populate with your mapObject instances
-];
+export default function Home() {
 
-const generatedCode = generateCode(mapObjects);
-console.log(generatedCode);
+  const [mapNodes, setMapNodes] = useState<mapNode[]>([
+    {
+      objectId: '1',
+      type: 'message',
+      label: 'Initial Message',
+      content: 'Initial Message',
+      rate: '999',
+      connectedBy: [],
+      connectedTo: ['2'],
+    },
+    {
+      objectId: '2',
+      type: 'encoder',
+      label: 'Encoder 1',
+      content: 'Encoder 1',
+      connectedBy: ['1'],
+      connectedTo: ['3'],
+    },
+    {
+      objectId: '3',
+      type: 'message',
+      label: 'Encoded Message',
+      content: 'Encoded Message',
+      connectedBy: ['2'],
+      connectedTo: ['4'],
+    },
+    {
+      objectId: '4',
+      type: 'decoder',
+      label: 'Decoder 1',
+      content: 'Decoder 1',
+      connectedBy: ['3'],
+      connectedTo: ['5'],
+    },
+    {
+      objectId: '5',
+      type: 'message',
+      label: 'Decoded Message',
+      content: 'Decoded Message',
+      connectedBy: ['4'],
+      connectedTo: [],
+    }
+  ]);
 
-*/
+  const [mapEdges, setMapEdges] = useState<mapEdge[]>([]);
+
+  const nodeTranslator = (nodes: mapNode[]) => {
+    const reactFlowNodes: any[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].connectedBy.length > 0) {
+        for (let j = 0; j < nodes[i].connectedBy.length; j++) {
+          mapEdges.push({
+            id: nodes[i].connectedBy[j] + '-' + nodes[i].objectId,
+            source: nodes[i].connectedBy[j],
+            target: nodes[i].objectId,
+          })
+        }
+      }
+      console.log(mapEdges);
+      reactFlowNodes.push({
+        id: nodes[i].objectId,
+        position: {
+          x: 100*(i+1),
+          y: 100*(i+1),
+        },
+        data: {
+          label: nodes[i].label,
+        },
+      })
+    }
+    console.log(reactFlowNodes);
+    return reactFlowNodes;
+  }
+
+  return (
+    <Box>
+      <Box width={'100vw'} height={'100vh'}>
+        <ReactFlow
+          nodes={nodeTranslator(mapNodes)}
+          edges={mapEdges}
+        >
+          <Background />
+          {/* <Controls /> */}
+        </ReactFlow>
+      </Box>
+    </Box>
+  );
+}
