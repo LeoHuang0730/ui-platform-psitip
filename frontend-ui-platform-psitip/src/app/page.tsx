@@ -5,6 +5,7 @@ import {
   Box,
   Typography,
   Button,
+  Input,
 } from "@mui/material";
 import { 
   ReactFlow, 
@@ -55,8 +56,8 @@ export default function Home() {
         label: 'Initial Message',
         content: 'Initial Message',
         rate: '999',
-        connectedBy: [],
-        connectedTo: ['2'],
+        // connectedBy: [],
+        // connectedTo: ['2'],
       },
     },
     {
@@ -70,8 +71,8 @@ export default function Home() {
         label: 'Encoder 1',
         content: 'Encoder 1',
         rate: '',
-        connectedBy: ['1'],
-        connectedTo: ['3'],
+        // connectedBy: ['1'],
+        // connectedTo: ['3'],
       },
     },
     {
@@ -85,8 +86,8 @@ export default function Home() {
         label: 'Encoded Message',
         content: 'Encoded Message',
         rate: '',
-        connectedBy: ['2'],
-        connectedTo: ['4'],
+        // connectedBy: ['2'],
+        // connectedTo: ['4'],
       },
     },
     {
@@ -100,8 +101,8 @@ export default function Home() {
         label: 'Decoder 1',
         content: 'Decoder 1',
         rate: '',
-        connectedBy: ['3'],
-        connectedTo: ['5'],
+        // connectedBy: ['3'],
+        // connectedTo: ['5'],
       },
     },
     {
@@ -115,13 +116,15 @@ export default function Home() {
         label: 'Decoded Message',
         content: 'Decoded Message',
         rate: '', 
-        connectedBy: ['4'],
-        connectedTo: [],
+        // connectedBy: ['4'],
+        // connectedTo: [],
       },
     }
   ]);
 
   const [mapEdges, setMapEdges] = useState<mapEdge[]>([]);
+
+  const [selectedNode, setSelectedNode] = useState<any>();
 
   const onNodesChange = useCallback(
     (changes:any) => setMapNodes((nds) => applyNodeChanges(changes, nds)),
@@ -147,7 +150,12 @@ export default function Home() {
         {
           id: '6',
           position: { x: 0, y: 0 },
-          data: { label: "test" }
+          data: { 
+            type: 'message',
+            label: 'Initial Message',
+            content: 'Initial Message',
+            rate: '999',
+          }
         }
       ];
     });
@@ -156,6 +164,14 @@ export default function Home() {
   useEffect(() => {
     console.log(mapNodes);
   }, [mapNodes]);
+
+  useEffect(() => {
+    console.log(mapEdges);
+  }, [mapEdges]);
+
+  useEffect(() => {
+    console.log(selectedNode);
+  }, [selectedNode]);
 
   return (
     <Box>
@@ -166,6 +182,9 @@ export default function Home() {
           edges={mapEdges}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={(event, node) => {
+            setSelectedNode(node);
+          }}
           fitView
         >
           <Background />
@@ -178,6 +197,22 @@ export default function Home() {
               <FaRegPlusSquare />
             </ControlButton>
           </Controls>
+          {/* <div className="updatenode__controls">
+            <label>label:</label>
+            <input
+              value={selectedNode?.data?.label}
+              onChange={(evt) => {
+                const updatedNodeProps = { 
+                  ...selectedNode, 
+                  data: { 
+                    ...selectedNode.data, 
+                    label: evt.target.value 
+                  } 
+                };
+                setSelectedNode(updatedNodeProps);
+              }}
+            />
+          </div> */}
         </ReactFlow>
       </Box>
     </Box>
