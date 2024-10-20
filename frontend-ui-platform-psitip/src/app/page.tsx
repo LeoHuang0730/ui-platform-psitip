@@ -32,13 +32,14 @@ interface mapNode {
   position: {
     x: number;
     y: number;
-  }
+  };
   data: {
     type: string;
     label: string;
     content: string;
     rate: string;
-  }
+    blockLength?: number;
+  };
 }
 
 interface mapEdge {
@@ -47,56 +48,28 @@ interface mapEdge {
   target: string;
 }
 
+let variableSequence = ['X', 'Y', 'Z', 'W', 'T', 'Q']; // Sequence of variable names
+
 export default function Home() {
   const [mapNodes, setMapNodes] = useState<mapNode[]>([
     {
-      id: '1',
+      id: 'M1',
       position: { x: 100, y: 100 },
       data: {
         type: 'message',
-        label: 'Initial Message',
+        label: 'M1',
         content: 'Initial Message',
-        rate: '999',
+        rate: 'R1',
       },
     },
     {
-      id: '2',
-      position: { x: 200, y: 200 },
-      data: {
-        type: 'encoder',
-        label: 'Encoder 1',
-        content: 'Encoder 1',
-        rate: '',
-      },
-    },
-    {
-      id: '3',
-      position: { x: 300, y: 300 },
-      data: {
-        type: 'message',
-        label: 'Encoded Message',
-        content: 'Encoded Message',
-        rate: '',
-      },
-    },
-    {
-      id: '4',
-      position: { x: 400, y: 400 },
-      data: {
-        type: 'decoder',
-        label: 'Decoder 1',
-        content: 'Decoder 1',
-        rate: '',
-      },
-    },
-    {
-      id: '5',
+      id: 'D1',
       position: { x: 500, y: 500 },
       data: {
-        type: 'message',
+        type: 'decoder',
         label: 'Decoded Message',
         content: 'Decoded Message',
-        rate: '', 
+        rate: '',
       },
     }
   ]);
@@ -119,21 +92,79 @@ export default function Home() {
     [],
   );
 
-  const addNode = useCallback(() => {
+  const addMessageNode = useCallback(() => {
+    const messageNodes = mapNodes.filter(node => node.data.type === 'message');
+    const existingMessageNumbers = messageNodes
+      .map(node => parseInt(node.id.replace('M', ''), 10)) // Extract numbers from M1, M2, etc.
+      .sort((a, b) => a - b); // Sort the numbers in ascending order
+
+    // Find the smallest available message number
+    let newMessageNumber = 1;
+    for (let i = 0; i < existingMessageNumbers.length; i++) {
+      if (existingMessageNumbers[i] !== newMessageNumber) {
+        break;
+      }
+      newMessageNumber++;
+    }
+
+    const newId = `M${newMessageNumber}`;
+    const newRate = `R${newMessageNumber}`;
+
     setMapNodes((mapNodes) => [
       ...mapNodes,
       {
-        id: `${mapNodes.length + 1}`,
+        id: newId,
         position: { x: 0, y: 0 },
         data: { 
           type: 'message',
-          label: 'New Message',
-          content: 'New Message',
-          rate: '999',
+          label: newId,
+          content: `Message ${newMessageNumber}`,
+          rate: newRate,
         }
       }
     ]);
-  }, []);
+  }, [mapNodes]);
+
+  const addVariableNode = useCallback(() => {
+    const variableNodes = mapNodes.filter(node => node.data.type === 'variable');
+    
+    let nextVariableId = 'X'; // Default variable
+    let nextBlockLength = 1; // Default block length
+
+    if (variableNodes.length > 0) {
+      const lastVariable = variableNodes[variableNodes.length - 1];
+      const lastVariableLabel = lastVariable.data.label;
+
+      const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
+      
+      if (match) {
+        const [_, letter, blockLength] = match;
+        const nextBlockNumber = parseInt(blockLength) + 1;
+
+        nextVariableId = `${letter}_${nextBlockNumber}`;
+      } else {
+        const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
+        if (nextIndex < variableSequence.length) {
+          nextVariableId = variableSequence[nextIndex];
+        }
+      }
+    }
+
+    setMapNodes((mapNodes) => [
+      ...mapNodes,
+      {
+        id: nextVariableId,
+        position: { x: 0, y: 0 },
+        data: { 
+          type: 'variable',
+          label: nextVariableId,
+          content: nextVariableId,
+          rate: '',
+          blockLength: nextBlockLength,  
+        }
+      }
+    ]);
+  }, [mapNodes]);
 
   const updateNodeData = useCallback((key: string, value: string) => {
     if (!selectedNode) return;
@@ -144,6 +175,48 @@ export default function Home() {
     );
     setSelectedNode((prev) => prev ? { ...prev, data: { ...prev.data, [key]: value } } : null);
   }, [selectedNode]);
+
+  const getDecodeSequence = useCallback((messageId: string) => {
+    const decodedNodes = mapNodes
+      .filter(node => node.data.type === 'decoded' && node.data.content === messageId)
+      .map(node => {
+        const match = node.data.label.match(/^.+,(\d+)$/);
+        return match ? parseInt(match[1], 10) : null;
+      })
+      .filter((num) => num !== null) as number[];
+
+    decodedNodes.sort((a, b) => a - b);
+
+    let nextSequence = 1;
+    for (let i = 0; i < decodedNodes.length; i++) {
+      if (decodedNodes[i] !== nextSequence) {
+        break;
+      }
+      nextSequence++;
+    }
+
+    return nextSequence;
+  }, [mapNodes]);
+
+  const handleDecoderChange = useCallback((selectedMessageId: string) => {
+    const nextSequence = getDecodeSequence(selectedMessageId);
+    const newLabel = `${selectedMessageId},${nextSequence}`;
+    updateNodeData('label', newLabel);
+  }, [getDecodeSequence, updateNodeData]);
+
+  const onNodeDelete = useCallback((nodeId: string) => {
+    setMapNodes((nodes) => {
+      const nodeToDelete = nodes.find(node => node.id === nodeId);
+      if (nodeToDelete && nodeToDelete.data.type === 'decoded') {
+        const messageId = nodeToDelete.data.content;
+        const updatedNodes = nodes.filter(node => node.id !== nodeId);
+
+        return updatedNodes;
+      }
+
+      return nodes.filter(node => node.id !== nodeId);
+    });
+  }, [setMapNodes]);
 
   return (
     <Box>
@@ -174,8 +247,22 @@ export default function Home() {
         >
           <Background />
           <Controls>
-            <ControlButton onClick={addNode}>
+            <ControlButton onClick={addMessageNode}>
               <FaRegPlusSquare />
+              Message
+            </ControlButton>
+            <ControlButton onClick={addVariableNode}>
+              <FaRegPlusSquare />
+              Variable
+            </ControlButton>
+            <ControlButton onClick={() => {
+              if (selectedNode) {
+                onNodeDelete(selectedNode.id);
+                setSelectedNode(null);
+              }
+            }}>
+              <FaRegPlusSquare />
+              Delete Node
             </ControlButton>
           </Controls>
         </ReactFlow>
@@ -189,7 +276,7 @@ export default function Home() {
             boxShadow={3}
             zIndex={10}
             width={300}
-            height={200}
+            height={300}
           >
             <Typography variant="h6">Edit Node</Typography>
             <Select
@@ -200,7 +287,7 @@ export default function Home() {
               <MenuItem value="message">Message</MenuItem>
               <MenuItem value="encoder">Encoder</MenuItem>
               <MenuItem value="decoder">Decoder</MenuItem>
-              <MenuItem value="encoded">Encoded Message</MenuItem>
+              <MenuItem value="variable">Variable</MenuItem>
               <MenuItem value="decoded">Decoded Message</MenuItem>
             </Select>
             <Input
@@ -222,6 +309,37 @@ export default function Home() {
                 onChange={(e) => updateNodeData('rate', e.target.value)}
                 fullWidth
               />
+            )}
+            {selectedNode.data.type === 'variable' && (
+              <>
+                <Input
+                  placeholder="Block Length"
+                  value={selectedNode.data.blockLength || 1}
+                  onChange={(e) => updateNodeData('blockLength', e.target.value)}
+                  fullWidth
+                />
+                <Typography>
+                  Current Variable: {selectedNode.data.blockLength && selectedNode.data.blockLength > 1 
+                    ? `${selectedNode.data.label}^${selectedNode.data.blockLength}` 
+                    : selectedNode.data.label}
+                </Typography>
+              </>
+            )}
+            {selectedNode.data.type === 'decoded' && (
+              <Select
+                value={selectedNode.data.content}
+                onChange={(e) => {
+                  handleDecoderChange(e.target.value);
+                  updateNodeData('content', e.target.value);
+                }}
+                fullWidth
+              >
+                {mapNodes
+                  .filter(node => node.data.type === 'message')
+                  .map(node => (
+                    <MenuItem key={node.id} value={node.id}>{node.id}</MenuItem>
+                  ))}
+              </Select>
             )}
           </Box>
         )}
