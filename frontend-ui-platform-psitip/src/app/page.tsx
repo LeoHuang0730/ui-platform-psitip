@@ -1,6 +1,5 @@
 'use client';
-import Image from "next/image";
-import styles from "./page.module.css";
+
 import {
   Box,
   Typography,
@@ -52,26 +51,7 @@ let variableSequence = ['X', 'Y', 'Z', 'W', 'T', 'Q']; // Sequence of variable n
 
 export default function Home() {
   const [mapNodes, setMapNodes] = useState<mapNode[]>([
-    {
-      id: 'M1',
-      position: { x: 100, y: 100 },
-      data: {
-        type: 'message',
-        label: 'M1',
-        content: 'Initial Message',
-        rate: 'R1',
-      },
-    },
-    {
-      id: 'D1',
-      position: { x: 500, y: 500 },
-      data: {
-        type: 'decoder',
-        label: 'Decoded Message',
-        content: 'Decoded Message',
-        rate: '',
-      },
-    }
+    
   ]);
 
   const [mapEdges, setMapEdges] = useState<mapEdge[]>([]);
@@ -95,10 +75,9 @@ export default function Home() {
   const addMessageNode = useCallback(() => {
     const messageNodes = mapNodes.filter(node => node.data.type === 'message');
     const existingMessageNumbers = messageNodes
-      .map(node => parseInt(node.id.replace('M', ''), 10)) // Extract numbers from M1, M2, etc.
-      .sort((a, b) => a - b); // Sort the numbers in ascending order
+      .map(node => parseInt(node.id.replace('M', ''), 10))
+      .sort((a, b) => a - b);
 
-    // Find the smallest available message number
     let newMessageNumber = 1;
     for (let i = 0; i < existingMessageNumbers.length; i++) {
       if (existingMessageNumbers[i] !== newMessageNumber) {
@@ -128,8 +107,8 @@ export default function Home() {
   const addVariableNode = useCallback(() => {
     const variableNodes = mapNodes.filter(node => node.data.type === 'variable');
     
-    let nextVariableId = 'X'; // Default variable
-    let nextBlockLength = 1; // Default block length
+    let nextVariableId = 'X';
+    let nextBlockLength = 1;
 
     if (variableNodes.length > 0) {
       const lastVariable = variableNodes[variableNodes.length - 1];
@@ -161,6 +140,59 @@ export default function Home() {
           content: nextVariableId,
           rate: '',
           blockLength: nextBlockLength,  
+        }
+      }
+    ]);
+  }, [mapNodes]);
+
+  const addEncoderNode = useCallback(() => {
+    const encoderNodes = mapNodes.filter(node => node.data.type === 'encoder');
+    const encoderId = `E${encoderNodes.length + 1}`;  // Count only encoder nodes
+    setMapNodes((mapNodes) => [
+      ...mapNodes,
+      {
+        id: encoderId,
+        position: { x: 0, y: 0 },
+        data: { 
+          type: 'encoder',
+          label: encoderId,
+          content: `Encoder ${encoderId}`,
+          rate: '',
+        }
+      }
+    ]);
+  }, [mapNodes]);
+
+  const addDecoderNode = useCallback(() => {
+    const decoderNodes = mapNodes.filter(node => node.data.type === 'decoder');
+    const decoderId = `D${decoderNodes.length + 1}`;  // Count only decoder nodes
+    setMapNodes((mapNodes) => [
+      ...mapNodes,
+      {
+        id: decoderId,
+        position: { x: 0, y: 0 },
+        data: { 
+          type: 'decoder',
+          label: decoderId,
+          content: `Decoder ${decoderId}`,
+          rate: '',
+        }
+      }
+    ]);
+  }, [mapNodes]);
+
+  const addDecodedMessageNode = useCallback(() => {
+    const decodedMessageId = `DM${mapNodes.filter(node => node.data.type === 'decoded').length + 1}`;
+    setMapNodes((mapNodes) => [
+      ...mapNodes,
+      {
+        id: decodedMessageId,
+        position: { x: 0, y: 0 },
+        data: { 
+          type: 'decoded',
+          label: decodedMessageId,
+          content: `Decoded Message ${decodedMessageId}`,
+          rate: '',
         }
       }
     ]);
@@ -255,14 +287,17 @@ export default function Home() {
               <FaRegPlusSquare />
               Variable
             </ControlButton>
-            <ControlButton onClick={() => {
-              if (selectedNode) {
-                onNodeDelete(selectedNode.id);
-                setSelectedNode(null);
-              }
-            }}>
+            <ControlButton onClick={addEncoderNode}>
               <FaRegPlusSquare />
-              Delete Node
+              Encoder
+            </ControlButton>
+            <ControlButton onClick={addDecoderNode}>
+              <FaRegPlusSquare />
+              Decoder
+            </ControlButton>
+            <ControlButton onClick={addDecodedMessageNode}>
+              <FaRegPlusSquare />
+              Decoded Message
             </ControlButton>
           </Controls>
         </ReactFlow>
@@ -279,17 +314,6 @@ export default function Home() {
             height={300}
           >
             <Typography variant="h6">Edit Node</Typography>
-            <Select
-              value={selectedNode.data.type}
-              onChange={(e) => updateNodeData('type', e.target.value)}
-              fullWidth
-            >
-              <MenuItem value="message">Message</MenuItem>
-              <MenuItem value="encoder">Encoder</MenuItem>
-              <MenuItem value="decoder">Decoder</MenuItem>
-              <MenuItem value="variable">Variable</MenuItem>
-              <MenuItem value="decoded">Decoded Message</MenuItem>
-            </Select>
             <Input
               placeholder="Label"
               value={selectedNode.data.label}
