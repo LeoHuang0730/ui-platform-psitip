@@ -278,26 +278,27 @@ export default function Home() {
           fitView
         >
           <Background />
-          <Controls>
-            <ControlButton onClick={addMessageNode}>
-              <FaRegPlusSquare />
-              Message
+          <Controls
+            position="top-left"
+            orientation="horizontal"
+            // showZoom={false}
+            // showFitView={false}
+            // showInteractive={false}
+          >
+            <ControlButton style={{ width: 'auto' }} onClick={addMessageNode}>
+              Add Message
             </ControlButton>
-            <ControlButton onClick={addVariableNode}>
-              <FaRegPlusSquare />
-              Variable
+            <ControlButton style={{ width: 'auto' }} onClick={addVariableNode}>
+              Add Variable
             </ControlButton>
-            <ControlButton onClick={addEncoderNode}>
-              <FaRegPlusSquare />
-              Encoder
+            <ControlButton style={{ width: 'auto' }} onClick={addEncoderNode}>
+              Add Encoder
             </ControlButton>
-            <ControlButton onClick={addDecoderNode}>
-              <FaRegPlusSquare />
-              Decoder
+            <ControlButton style={{ width: 'auto' }} onClick={addDecoderNode}>
+              Add Decoder
             </ControlButton>
-            <ControlButton onClick={addDecodedMessageNode}>
-              <FaRegPlusSquare />
-              Decoded Message
+            <ControlButton style={{ width: 'auto' }} onClick={addDecodedMessageNode}>
+              Add Decoded Message
             </ControlButton>
           </Controls>
         </ReactFlow>
@@ -310,61 +311,58 @@ export default function Home() {
             p={2}
             boxShadow={3}
             zIndex={10}
-            width={300}
-            height={300}
+            width='auto'
+            height='auto'
           >
             <Typography variant="h6">Edit Node</Typography>
-            <Input
-              placeholder="Label"
-              value={selectedNode.data.label}
-              onChange={(e) => updateNodeData('label', e.target.value)}
-              fullWidth
-            />
-            <Input
-              placeholder="Content"
-              value={selectedNode.data.content}
-              onChange={(e) => updateNodeData('content', e.target.value)}
-              fullWidth
-            />
-            {selectedNode.data.type === 'message' && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Input
-                placeholder="Rate"
-                value={selectedNode.data.rate}
-                onChange={(e) => updateNodeData('rate', e.target.value)}
-                fullWidth
+                placeholder="Label"
+                value={selectedNode.data.label}
+                onChange={(e) => updateNodeData('label', e.target.value)}
               />
-            )}
-            {selectedNode.data.type === 'variable' && (
-              <>
-                <Input
-                  placeholder="Block Length"
-                  value={selectedNode.data.blockLength || 1}
-                  onChange={(e) => updateNodeData('blockLength', e.target.value)}
-                  fullWidth
-                />
-                <Typography>
-                  Current Variable: {selectedNode.data.blockLength && selectedNode.data.blockLength > 1 
-                    ? `${selectedNode.data.label}^${selectedNode.data.blockLength}` 
-                    : selectedNode.data.label}
-                </Typography>
-              </>
-            )}
-            {selectedNode.data.type === 'decoded' && (
-              <Select
+              <Input
+                placeholder="Content"
                 value={selectedNode.data.content}
-                onChange={(e) => {
-                  handleDecoderChange(e.target.value);
-                  updateNodeData('content', e.target.value);
-                }}
-                fullWidth
-              >
-                {mapNodes
-                  .filter(node => node.data.type === 'message')
-                  .map(node => (
-                    <MenuItem key={node.id} value={node.id}>{node.id}</MenuItem>
-                  ))}
-              </Select>
-            )}
+                onChange={(e) => updateNodeData('content', e.target.value)}
+              />
+              {selectedNode.data.type === 'message' && (
+                <Input
+                  placeholder="Rate"
+                  value={selectedNode.data.rate}
+                  onChange={(e) => updateNodeData('rate', e.target.value)}
+                />
+              )}
+              {selectedNode.data.type === 'variable' && (
+                <>
+                  <Input
+                    placeholder="Block Length"
+                    value={selectedNode.data.blockLength || 1}
+                    onChange={(e) => updateNodeData('blockLength', e.target.value)}
+                  />
+                  <Typography>
+                    Current Variable: {selectedNode.data.blockLength && selectedNode.data.blockLength > 1 
+                      ? `${selectedNode.data.label}^${selectedNode.data.blockLength}` 
+                      : selectedNode.data.label}
+                  </Typography>
+                </>
+              )}
+              {selectedNode.data.type === 'decoded' && (
+                <Select
+                  value={selectedNode.data.content}
+                  onChange={(e) => {
+                    handleDecoderChange(e.target.value);
+                    updateNodeData('content', e.target.value);
+                  }}
+                >
+                  {mapNodes
+                    .filter(node => node.data.type === 'message')
+                    .map(node => (
+                      <MenuItem key={node.id} value={node.id}>{node.id}</MenuItem>
+                    ))}
+                </Select>
+              )}
+            </Box>
           </Box>
         )}
       </Box>
