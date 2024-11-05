@@ -1,5 +1,5 @@
 'use client';
-
+import React, { CSSProperties } from 'react';
 import {
   Box,
   Typography,
@@ -12,7 +12,6 @@ import {
   ReactFlow, 
   Background, 
   Controls, 
-  Position,
   ControlButton,
   applyNodeChanges,
   applyEdgeChanges,
@@ -24,7 +23,6 @@ import {
   useState,
   useCallback,
 } from "react";
-import { FaRegPlusSquare } from "react-icons/fa";
 
 interface mapNode {
   id: string;
@@ -50,10 +48,7 @@ interface mapEdge {
 let variableSequence = ['X', 'Y', 'Z', 'W', 'T', 'Q']; // Sequence of variable names
 
 export default function Home() {
-  const [mapNodes, setMapNodes] = useState<mapNode[]>([
-    
-  ]);
-
+  const [mapNodes, setMapNodes] = useState<mapNode[]>([]);
   const [mapEdges, setMapEdges] = useState<mapEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<mapNode | null>(null);
 
@@ -198,6 +193,24 @@ export default function Home() {
     ]);
   }, [mapNodes]);
 
+  const addChannelNode = useCallback(() => {
+    const channelNodes = mapNodes.filter(node => node.data.type === 'channel');
+    const channelId = `C${channelNodes.length + 1}`;  // Count only channel nodes
+    setMapNodes((mapNodes) => [
+      ...mapNodes,
+      {
+        id: channelId,
+        position: { x: 0, y: 0 },
+        data: { 
+          type: 'channel',
+          label: channelId,
+          content: `Channel ${channelId}`,
+          rate: '',
+        }
+      }
+    ]);
+  }, [mapNodes]);
+
   const updateNodeData = useCallback((key: string, value: string) => {
     if (!selectedNode) return;
     setMapNodes((nodes) =>
@@ -250,15 +263,35 @@ export default function Home() {
     });
   }, [setMapNodes]);
 
+  // Custom style function for nodes
+  const getNodeStyle = (nodeType: string): CSSProperties => {
+    switch (nodeType) {
+      case 'encoder':
+      case 'decoder':
+      case 'channel':
+        return { width: 'auto', height: 'auto', borderRadius: '0%' }; // Square shape
+      default:
+        return { width: 'auto', height: 'auto', borderRadius: '50%' }; // Default circle
+    }
+  };
+
+  // Function to get the node label based on blockLength
+  const getNodeLabel = (node: mapNode) => {
+    if (node.data.type === 'variable' && node.data.blockLength && node.data.blockLength > 1) {
+      return `${node.data.label}^${node.data.blockLength}`;
+    }
+    return node.data.label;
+  };
+
   return (
     <Box>
       <Box width={'100vw'} height={'100vh'} position="relative">
         <ReactFlow
           nodes={mapNodes.map(node => ({
             ...node,
-            style: { borderRadius: '50%', textAlign: 'center', padding: 10 },
+            style: getNodeStyle(node.data.type),
             type: 'default',
-            data: { ...node.data, label: node.data.label }
+            data: { ...node.data, label: getNodeLabel(node) }
           }))}
           onNodesChange={onNodesChange}
           edges={mapEdges.map(edge => ({
@@ -281,9 +314,6 @@ export default function Home() {
           <Controls
             position="top-left"
             orientation="horizontal"
-            // showZoom={false}
-            // showFitView={false}
-            // showInteractive={false}
           >
             <ControlButton style={{ width: 'auto' }} onClick={addMessageNode}>
               Add Message
@@ -299,6 +329,9 @@ export default function Home() {
             </ControlButton>
             <ControlButton style={{ width: 'auto' }} onClick={addDecodedMessageNode}>
               Add Decoded Message
+            </ControlButton>
+            <ControlButton style={{ width: 'auto' }} onClick={addChannelNode}>
+              Add Channel
             </ControlButton>
           </Controls>
         </ReactFlow>
