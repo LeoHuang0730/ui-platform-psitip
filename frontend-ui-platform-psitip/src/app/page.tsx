@@ -1,5 +1,5 @@
 "use client";
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -36,7 +36,9 @@ interface mapNode {
     label: string;
     content: string;
     rate: string;
-    blockLength?: number;
+    blockLength?: number | string;
+    inputs?: string[];
+    outputs?: string[];
   };
 }
 
@@ -64,7 +66,10 @@ export default function Home() {
   );
 
   const onConnect = useCallback(
-    (params: any) => setMapEdges((eds) => addEdge(params, eds)),
+    (params: any) => {
+      setMapEdges((eds) => addEdge(params, eds));
+      updateChannelLabel(params.source, params.target);
+    },
     []
   );
 
@@ -93,7 +98,7 @@ export default function Home() {
         id: newId,
         sourcePosition: "right",
         targetPosition: "left",
-        position: { x: 0, y: messageNodes.length * 200 },
+        position: { x: 0, y: messageNodes.length * 50 },
         data: {
           type: "message",
           label: newId,
@@ -110,7 +115,7 @@ export default function Home() {
     );
 
     let nextVariableId = "X";
-    let nextBlockLength = 1;
+    let nextBlockLength: number | string = 1;
 
     if (variableNodes.length > 0) {
       const lastVariable = variableNodes[variableNodes.length - 1];
@@ -123,10 +128,12 @@ export default function Home() {
         const nextBlockNumber = parseInt(blockLength) + 1;
 
         nextVariableId = `${letter}_${nextBlockNumber}`;
+        nextBlockLength = lastVariable.data.blockLength || 1;
       } else {
         const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
         if (nextIndex < variableSequence.length) {
           nextVariableId = variableSequence[nextIndex];
+          nextBlockLength = lastVariable.data.blockLength || 1;
         }
       }
     }
@@ -137,7 +144,7 @@ export default function Home() {
         id: nextVariableId,
         sourcePosition: "right",
         targetPosition: "left",
-        position: { x: 100, y: variableNodes.length * 200 },
+        position: { x: 50, y: variableNodes.length * 50 },
         data: {
           type: "variable",
           label: nextVariableId,
@@ -153,14 +160,14 @@ export default function Home() {
     const encoderNodes = mapNodes.filter(
       (node) => node.data.type === "encoder"
     );
-    const encoderId = `E${encoderNodes.length + 1}`; // Count only encoder nodes
+    const encoderId = `Enc${encoderNodes.length + 1}`; // Count only encoder nodes
     setMapNodes((mapNodes) => [
       ...mapNodes,
       {
         id: encoderId,
         sourcePosition: "right",
         targetPosition: "left",
-        position: { x: 200, y: encoderNodes.length * 200 },
+        position: { x: 100, y: encoderNodes.length * 50 },
         data: {
           type: "encoder",
           label: encoderId,
@@ -175,14 +182,14 @@ export default function Home() {
     const decoderNodes = mapNodes.filter(
       (node) => node.data.type === "decoder"
     );
-    const decoderId = `D${decoderNodes.length + 1}`; // Count only decoder nodes
+    const decoderId = `Dec${decoderNodes.length + 1}`; // Count only decoder nodes
     setMapNodes((mapNodes) => [
       ...mapNodes,
       {
         id: decoderId,
         sourcePosition: "right",
         targetPosition: "left",
-        position: { x: 300, y: decoderNodes.length * 200 },
+        position: { x: 150, y: decoderNodes.length * 50 },
         data: {
           type: "decoder",
           label: decoderId,
@@ -206,7 +213,7 @@ export default function Home() {
         id: decodedMessageId,
         sourcePosition: "right",
         targetPosition: "left",
-        position: { x: 400, y: decodedMessageNodes.length * 200 },
+        position: { x: 200, y: decodedMessageNodes.length * 50 },
         data: {
           type: "decoded",
           label: decodedMessageId,
@@ -228,16 +235,50 @@ export default function Home() {
         id: channelId,
         sourcePosition: "right",
         targetPosition: "left",
-        position: { x: 500, y: channelNodes.length * 200 },
+        position: { x: 250, y: channelNodes.length * 50 },
         data: {
           type: "channel",
-          label: channelId,
+          label: "P( | )", // Default label format
           content: `Channel ${channelId}`,
           rate: "",
+          inputs: [],
+          outputs: [],
         },
       },
     ]);
   }, [mapNodes]);
+
+  const updateChannelLabel = useCallback((sourceId: string, targetId: string) => {
+    setMapNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === targetId && node.data.type === "channel") {
+          const sourceNode = nodes.find((n) => n.id === sourceId);
+          if (sourceNode) {
+            const newInputs = [...(node.data.inputs || []), sourceNode.id];
+            const newOutputs = node.data.outputs || [];
+            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
+            return {
+              ...node,
+              data: { ...node.data, inputs: newInputs, label: newLabel },
+            };
+          }
+        }
+        if (node.id === sourceId && node.data.type === "channel") {
+          const targetNode = nodes.find((n) => n.id === targetId);
+          if (targetNode) {
+            const newOutputs = [...(node.data.outputs || []), targetNode.id];
+            const newInputs = node.data.inputs || [];
+            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
+            return {
+              ...node,
+              data: { ...node.data, outputs: newOutputs, label: newLabel },
+            };
+          }
+        }
+        return node;
+      })
+    );
+  }, []);
 
   const updateNodeData = useCallback(
     (key: string, value: string) => {
@@ -327,7 +368,7 @@ export default function Home() {
     if (
       node.data.type === "variable" &&
       node.data.blockLength &&
-      node.data.blockLength > 1
+      node.data.blockLength !== 1
     ) {
       return `${node.data.label}^${node.data.blockLength}`;
     }
@@ -406,45 +447,60 @@ export default function Home() {
             height="auto"
           >
             <Typography variant="h6">Edit Node</Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Input
-                placeholder="Label"
-                value={selectedNode.data.label}
-                onChange={(e) => updateNodeData("label", e.target.value)}
-              />
-              <Input
-                placeholder="Content"
-                value={selectedNode.data.content}
-                onChange={(e) => updateNodeData("content", e.target.value)}
-              />
-              {selectedNode.data.type === "message" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography>Label:</Typography>
                 <Input
-                  placeholder="Rate"
-                  value={selectedNode.data.rate}
-                  onChange={(e) => updateNodeData("rate", e.target.value)}
+                  placeholder="Label"
+                  value={selectedNode.data.label}
+                  onChange={(e) => updateNodeData("label", e.target.value)}
                 />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography>Content:</Typography>
+                <Input
+                  placeholder="Content"
+                  value={selectedNode.data.content}
+                  onChange={(e) => updateNodeData("content", e.target.value)}
+                />
+              </Box>
+              {selectedNode.data.type === "message" && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography>Rate:</Typography>
+                  <Input
+                    placeholder="Rate"
+                    value={selectedNode.data.rate}
+                    onChange={(e) => updateNodeData("rate", e.target.value)}
+                  />
+                </Box>
               )}
               {selectedNode.data.type === "variable" && (
                 <>
-                  <Input
-                    placeholder="Block Length"
-                    value={selectedNode.data.blockLength || 1}
-                    onChange={(e) =>
-                      updateNodeData("blockLength", e.target.value)
-                    }
-                  />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Block Length:</Typography>
+                    <Input
+                      placeholder="Block Length"
+                      value={selectedNode.data.blockLength || 1}
+                      onChange={(e) =>
+                        updateNodeData("blockLength", e.target.value)
+                      }
+                    />
+                  </Box>
                   <Typography>
                     Current Variable:{" "}
                     {selectedNode.data.blockLength &&
-                    selectedNode.data.blockLength > 1
+                    selectedNode.data.blockLength !== 1
                       ? `${selectedNode.data.label}^${selectedNode.data.blockLength}`
                       : selectedNode.data.label}
                   </Typography>
                 </>
               )}
               {selectedNode.data.type === "decoded" && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography>Decoding:</Typography>
                 <Select
                   value={selectedNode.data.content}
+                  style={{ minWidth: "100px", height: "40px" }}
                   onChange={(e) => {
                     handleDecoderChange(e.target.value);
                     updateNodeData("content", e.target.value);
@@ -458,6 +514,7 @@ export default function Home() {
                       </MenuItem>
                     ))}
                 </Select>
+                </Box>
               )}
             </Box>
           </Box>
