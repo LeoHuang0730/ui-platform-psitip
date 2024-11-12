@@ -65,6 +65,29 @@ export default function Home() {
     []
   );
 
+  const onEdgesDelete = useCallback((edges: mapEdge[]) => {
+    edges.forEach(edge => {
+      setMapNodes(nodes => 
+        nodes.map(node => {
+          if (node.data.type === 'channel') {
+            const newInputs = (node.data.inputs || []).filter(input => 
+              !edges.some(e => e.source === input && e.target === node.id)
+            );
+            const newOutputs = (node.data.outputs || []).filter(output => 
+              !edges.some(e => e.source === node.id && e.target === output)
+            );
+            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
+            return {
+              ...node,
+              data: { ...node.data, inputs: newInputs, outputs: newOutputs, label: newLabel }
+            };
+          }
+          return node;
+        })
+      );
+    });
+  }, []);
+
   const onConnect = useCallback(
     (params: any) => {
       setMapEdges((eds) => addEdge(params, eds));
@@ -115,25 +138,19 @@ export default function Home() {
     );
 
     let nextVariableId = "X";
-    let nextBlockLength: number | string = 1;
+    let nextBlockLength: number | string = "n";
 
     if (variableNodes.length > 0) {
       const lastVariable = variableNodes[variableNodes.length - 1];
       const lastVariableLabel = lastVariable.data.label;
 
-      const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
+      const match = lastVariableLabel.match(/^([A-Z])(?:_(\d+))?$/);
 
       if (match) {
-        const [_, letter, blockLength] = match;
-        const nextBlockNumber = parseInt(blockLength) + 1;
-
-        nextVariableId = `${letter}_${nextBlockNumber}`;
-        nextBlockLength = lastVariable.data.blockLength || 1;
-      } else {
-        const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
+        const [_, letter] = match;
+        const nextIndex = variableSequence.indexOf(letter) + 1;
         if (nextIndex < variableSequence.length) {
           nextVariableId = variableSequence[nextIndex];
-          nextBlockLength = lastVariable.data.blockLength || 1;
         }
       }
     }
@@ -148,7 +165,7 @@ export default function Home() {
         data: {
           type: "variable",
           label: nextVariableId,
-          content: nextVariableId,
+          content: `${nextVariableId}^${nextBlockLength}`,
           rate: "",
           blockLength: nextBlockLength,
         },
@@ -160,7 +177,7 @@ export default function Home() {
     const encoderNodes = mapNodes.filter(
       (node) => node.data.type === "encoder"
     );
-    const encoderId = `Enc${encoderNodes.length + 1}`; // Count only encoder nodes
+    const encoderId = `Enc${encoderNodes.length + 1}`;
     setMapNodes((mapNodes) => [
       ...mapNodes,
       {
@@ -182,7 +199,7 @@ export default function Home() {
     const decoderNodes = mapNodes.filter(
       (node) => node.data.type === "decoder"
     );
-    const decoderId = `Dec${decoderNodes.length + 1}`; // Count only decoder nodes
+    const decoderId = `Dec${decoderNodes.length + 1}`;
     setMapNodes((mapNodes) => [
       ...mapNodes,
       {
@@ -228,7 +245,7 @@ export default function Home() {
     const channelNodes = mapNodes.filter(
       (node) => node.data.type === "channel"
     );
-    const channelId = `C${channelNodes.length + 1}`; // Count only channel nodes
+    const channelId = `C${channelNodes.length + 1}`;
     setMapNodes((mapNodes) => [
       ...mapNodes,
       {
@@ -238,7 +255,7 @@ export default function Home() {
         position: { x: 250, y: channelNodes.length * 50 },
         data: {
           type: "channel",
-          label: "P( | )", // Default label format
+          label: "P( | )",
           content: `Channel ${channelId}`,
           rate: "",
           inputs: [],
@@ -254,7 +271,7 @@ export default function Home() {
         if (node.id === targetId && node.data.type === "channel") {
           const sourceNode = nodes.find((n) => n.id === sourceId);
           if (sourceNode) {
-            const newInputs = [...(node.data.inputs || []), sourceNode.id];
+            const newInputs = Array.from(new Set([...(node.data.inputs || []), sourceNode.id]));
             const newOutputs = node.data.outputs || [];
             const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
             return {
@@ -266,7 +283,7 @@ export default function Home() {
         if (node.id === sourceId && node.data.type === "channel") {
           const targetNode = nodes.find((n) => n.id === targetId);
           if (targetNode) {
-            const newOutputs = [...(node.data.outputs || []), targetNode.id];
+            const newOutputs = Array.from(new Set([...(node.data.outputs || []), targetNode.id]));
             const newInputs = node.data.inputs || [];
             const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
             return {
@@ -351,26 +368,25 @@ export default function Home() {
     [setMapNodes]
   );
 
-  // Custom style function for nodes
   const getNodeStyle = (nodeType: string): CSSProperties => {
     switch (nodeType) {
       case "encoder":
       case "decoder":
       case "channel":
-        return { width: "auto", height: "auto", borderRadius: "0%" }; // Square shape
+        return { width: "auto", height: "auto", borderRadius: "0%" };
       default:
-        return { width: "auto", height: "auto", borderRadius: "50%" }; // Default circle
+        return { width: "auto", height: "auto", borderRadius: "50%" };
     }
   };
 
-  // Function to get the node label based on blockLength
   const getNodeLabel = (node: mapNode) => {
-    if (
-      node.data.type === "variable" &&
-      node.data.blockLength &&
-      node.data.blockLength !== 1
-    ) {
-      return `${node.data.label}^${node.data.blockLength}`;
+    if (node.data.type === "variable") {
+      const label = node.data.label;
+      const blockLength = node.data.blockLength;
+      
+      if (blockLength && blockLength !== "1") {
+        return `${label}^${blockLength}`;
+      }
     }
     return node.data.label;
   };
@@ -399,6 +415,7 @@ export default function Home() {
             style: { stroke: "black" },
           }))}
           onEdgesChange={onEdgesChange}
+          onEdgesDelete={onEdgesDelete}
           onConnect={onConnect}
           onNodeClick={(event, node) => {
             if (selectedNode && selectedNode.id === node.id) {
@@ -475,26 +492,24 @@ export default function Home() {
                 </Box>
               )}
               {selectedNode.data.type === "variable" && (
-                <>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Block Length:</Typography>
-                    <Input
-                      placeholder="Block Length"
-                      value={selectedNode.data.blockLength || 1}
-                      onChange={(e) =>
-                        updateNodeData("blockLength", e.target.value)
-                      }
-                    />
-                  </Box>
-                  <Typography>
-                    Current Variable:{" "}
-                    {selectedNode.data.blockLength &&
-                    selectedNode.data.blockLength !== 1
-                      ? `${selectedNode.data.label}^${selectedNode.data.blockLength}`
-                      : selectedNode.data.label}
-                  </Typography>
-                </>
-              )}
+  <>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Typography>Block Length:</Typography>
+      <Input
+        placeholder="Block Length"
+        value={selectedNode.data.blockLength || "n"}
+        onChange={(e) => {
+          const value = e.target.value;
+          const isValid = /^(\d+|n)$/.test(value); // Check if value is an integer or "n"
+          updateNodeData("blockLength", isValid ? value : "n");
+        }}
+      />
+    </Box>
+    <Typography>
+      Current Variable: {selectedNode.data.label}
+    </Typography>
+  </>
+)}
               {selectedNode.data.type === "decoded" && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography>Decoding:</Typography>
