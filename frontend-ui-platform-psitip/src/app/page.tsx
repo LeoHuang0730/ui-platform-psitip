@@ -1,5 +1,5 @@
 "use client";
-import React, { CSSProperties, useEffect } from "react";
+import React, { CSSProperties, useEffect, useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -19,10 +19,8 @@ import {
   applyEdgeChanges,
   addEdge,
   MarkerType,
-  ConnectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useState, useCallback } from "react";
 import { FaRegPlusSquare } from "react-icons/fa";
 
 interface mapNode {
@@ -54,6 +52,7 @@ export default function Home() {
   const [mapNodes, setMapNodes] = useState<mapNode[]>([]);
   const [mapEdges, setMapEdges] = useState<mapEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<mapNode | null>(null);
+  const [lastBlockLength, setLastBlockLength] = useState<number | string>("n");
 
   const onNodesChange = useCallback(
     (changes: any) => setMapNodes((nds) => applyNodeChanges(changes, nds)),
@@ -66,20 +65,20 @@ export default function Home() {
   );
 
   const onEdgesDelete = useCallback((edges: mapEdge[]) => {
-    edges.forEach(edge => {
-      setMapNodes(nodes => 
-        nodes.map(node => {
-          if (node.data.type === 'channel') {
-            const newInputs = (node.data.inputs || []).filter(input => 
-              !edges.some(e => e.source === input && e.target === node.id)
+    edges.forEach((edge) => {
+      setMapNodes((nodes) =>
+        nodes.map((node) => {
+          if (node.data.type === "channel") {
+            const newInputs = (node.data.inputs || []).filter(
+              (input) => !edges.some((e) => e.source === input && e.target === node.id)
             );
-            const newOutputs = (node.data.outputs || []).filter(output => 
-              !edges.some(e => e.source === node.id && e.target === output)
+            const newOutputs = (node.data.outputs || []).filter(
+              (output) => !edges.some((e) => e.source === node.id && e.target === output)
             );
             const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
             return {
               ...node,
-              data: { ...node.data, inputs: newInputs, outputs: newOutputs, label: newLabel }
+              data: { ...node.data, inputs: newInputs, outputs: newOutputs, label: newLabel },
             };
           }
           return node;
@@ -138,12 +137,10 @@ export default function Home() {
     );
 
     let nextVariableId = "X";
-    let nextBlockLength: number | string = "n";
 
     if (variableNodes.length > 0) {
       const lastVariable = variableNodes[variableNodes.length - 1];
       const lastVariableLabel = lastVariable.data.label;
-
       const match = lastVariableLabel.match(/^([A-Z])(?:_(\d+))?$/);
 
       if (match) {
@@ -165,13 +162,13 @@ export default function Home() {
         data: {
           type: "variable",
           label: nextVariableId,
-          content: `${nextVariableId}^${nextBlockLength}`,
+          content: `${nextVariableId}^${lastBlockLength}`,
           rate: "",
-          blockLength: nextBlockLength,
+          blockLength: lastBlockLength,
         },
       },
     ]);
-  }, [mapNodes]);
+  }, [mapNodes, lastBlockLength]);
 
   const addEncoderNode = useCallback(() => {
     const encoderNodes = mapNodes.filter(
@@ -310,6 +307,10 @@ export default function Home() {
       setSelectedNode((prev) =>
         prev ? { ...prev, data: { ...prev.data, [key]: value } } : null
       );
+
+      if (selectedNode.data.type === "variable" && key === "blockLength") {
+        setLastBlockLength(value);
+      }
     },
     [selectedNode]
   );
@@ -358,10 +359,8 @@ export default function Home() {
         if (nodeToDelete && nodeToDelete.data.type === "decoded") {
           const messageId = nodeToDelete.data.content;
           const updatedNodes = nodes.filter((node) => node.id !== nodeId);
-
           return updatedNodes;
         }
-
         return nodes.filter((node) => node.id !== nodeId);
       });
     },
@@ -483,7 +482,7 @@ export default function Home() {
               </Box>
               {selectedNode.data.type === "message" && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography>Rate:</Typography>
+                  <Typography>Rate:</Typography>
                   <Input
                     placeholder="Rate"
                     value={selectedNode.data.rate}
@@ -492,43 +491,43 @@ export default function Home() {
                 </Box>
               )}
               {selectedNode.data.type === "variable" && (
-  <>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Typography>Block Length:</Typography>
-      <Input
-        placeholder="Block Length"
-        value={selectedNode.data.blockLength || "n"}
-        onChange={(e) => {
-          const value = e.target.value;
-          const isValid = /^(\d+|n)$/.test(value); // Check if value is an integer or "n"
-          updateNodeData("blockLength", isValid ? value : "n");
-        }}
-      />
-    </Box>
-    <Typography>
-      Current Variable: {selectedNode.data.label}
-    </Typography>
-  </>
-)}
+                <>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography>Block Length:</Typography>
+                    <Input
+                      placeholder="Block Length"
+                      value={selectedNode.data.blockLength || "n"}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const isValid = /^(\d+|n)$/.test(value); // Check if value is an integer or "n"
+                        updateNodeData("blockLength", isValid ? value : "n");
+                      }}
+                    />
+                  </Box>
+                  <Typography>
+                    Current Variable: {selectedNode.data.label}
+                  </Typography>
+                </>
+              )}
               {selectedNode.data.type === "decoded" && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography>Decoding:</Typography>
-                <Select
-                  value={selectedNode.data.content}
-                  style={{ minWidth: "100px", height: "40px" }}
-                  onChange={(e) => {
-                    handleDecoderChange(e.target.value);
-                    updateNodeData("content", e.target.value);
-                  }}
-                >
-                  {mapNodes
-                    .filter((node) => node.data.type === "message")
-                    .map((node) => (
-                      <MenuItem key={node.id} value={node.id}>
-                        {node.id}
-                      </MenuItem>
-                    ))}
-                </Select>
+                  <Typography>Decoding:</Typography>
+                  <Select
+                    value={selectedNode.data.content}
+                    style={{ minWidth: "100px", height: "40px" }}
+                    onChange={(e) => {
+                      handleDecoderChange(e.target.value);
+                      updateNodeData("content", e.target.value);
+                    }}
+                  >
+                    {mapNodes
+                      .filter((node) => node.data.type === "message")
+                      .map((node) => (
+                        <MenuItem key={node.id} value={node.id}>
+                          {node.id}
+                        </MenuItem>
+                      ))}
+                  </Select>
                 </Box>
               )}
             </Box>
@@ -538,3 +537,10 @@ export default function Home() {
     </Box>
   );
 }
+
+
+/* Put hat on Decoded M
+Additional Information box
+Add source default S, decoded as S and can choose from sources.
+UI imporvements
+*/
