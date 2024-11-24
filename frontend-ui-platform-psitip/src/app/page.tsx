@@ -21,7 +21,9 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { FaRegPlusSquare } from "react-icons/fa";
+import { RxCross1 } from "react-icons/rx";
+import { FaPlus } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
 
 interface mapNode {
   id: string;
@@ -53,6 +55,9 @@ export default function Home() {
   const [mapEdges, setMapEdges] = useState<mapEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<mapNode | null>(null);
   const [lastBlockLength, setLastBlockLength] = useState<number | string>("n");
+  const [additionalConditions, setAdditionalConditions] = useState<string[]>(
+    []
+  );
 
   const onNodesChange = useCallback(
     (changes: any) => setMapNodes((nds) => applyNodeChanges(changes, nds)),
@@ -65,20 +70,29 @@ export default function Home() {
   );
 
   const onEdgesDelete = useCallback((edges: mapEdge[]) => {
-    edges.forEach((edge) => {
+    edges.forEach(() => {
       setMapNodes((nodes) =>
         nodes.map((node) => {
           if (node.data.type === "channel") {
             const newInputs = (node.data.inputs || []).filter(
-              (input) => !edges.some((e) => e.source === input && e.target === node.id)
+              (input) =>
+                !edges.some((e) => e.source === input && e.target === node.id)
             );
             const newOutputs = (node.data.outputs || []).filter(
-              (output) => !edges.some((e) => e.source === node.id && e.target === output)
+              (output) =>
+                !edges.some((e) => e.source === node.id && e.target === output)
             );
-            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
+            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
+              ", "
+            )})`;
             return {
               ...node,
-              data: { ...node.data, inputs: newInputs, outputs: newOutputs, label: newLabel },
+              data: {
+                ...node.data,
+                inputs: newInputs,
+                outputs: newOutputs,
+                label: newLabel,
+              },
             };
           }
           return node;
@@ -87,20 +101,17 @@ export default function Home() {
     });
   }, []);
 
-  const onConnect = useCallback(
-    (params: any) => {
-      setMapEdges((eds) => addEdge(params, eds));
-      updateChannelLabel(params.source, params.target);
-    },
-    []
-  );
+  const onConnect = useCallback((params: any) => {
+    setMapEdges((eds) => addEdge(params, eds));
+    updateChannelLabel(params.source, params.target);
+  }, []);
 
   const addMessageNode = useCallback(() => {
     const messageNodes = mapNodes.filter(
       (node) => node.data.type === "message"
     );
     const existingMessageNumbers = messageNodes
-      .map((node) => parseInt(node.id.replace("M", ""), 10))
+      .map((node) => parseInt(node.id.replace("S", ""), 10))
       .sort((a, b) => a - b);
 
     let newMessageNumber = 1;
@@ -111,7 +122,7 @@ export default function Home() {
       newMessageNumber++;
     }
 
-    const newId = `M${newMessageNumber}`;
+    const newId = `S${newMessageNumber}`;
     const newRate = `R${newMessageNumber}`;
 
     setMapNodes((mapNodes) => [
@@ -262,37 +273,48 @@ export default function Home() {
     ]);
   }, [mapNodes]);
 
-  const updateChannelLabel = useCallback((sourceId: string, targetId: string) => {
-    setMapNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === targetId && node.data.type === "channel") {
-          const sourceNode = nodes.find((n) => n.id === sourceId);
-          if (sourceNode) {
-            const newInputs = Array.from(new Set([...(node.data.inputs || []), sourceNode.id]));
-            const newOutputs = node.data.outputs || [];
-            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
-            return {
-              ...node,
-              data: { ...node.data, inputs: newInputs, label: newLabel },
-            };
+  const updateChannelLabel = useCallback(
+    (sourceId: string, targetId: string) => {
+      setMapNodes((nodes) =>
+        nodes.map((node) => {
+          if (node.id === targetId && node.data.type === "channel") {
+            const sourceNode = nodes.find((n) => n.id === sourceId);
+            if (sourceNode) {
+              const newInputs = Array.from(
+                new Set([...(node.data.inputs || []), sourceNode.id])
+              );
+              const newOutputs = node.data.outputs || [];
+              const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
+                ", "
+              )})`;
+              return {
+                ...node,
+                data: { ...node.data, inputs: newInputs, label: newLabel },
+              };
+            }
           }
-        }
-        if (node.id === sourceId && node.data.type === "channel") {
-          const targetNode = nodes.find((n) => n.id === targetId);
-          if (targetNode) {
-            const newOutputs = Array.from(new Set([...(node.data.outputs || []), targetNode.id]));
-            const newInputs = node.data.inputs || [];
-            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(", ")})`;
-            return {
-              ...node,
-              data: { ...node.data, outputs: newOutputs, label: newLabel },
-            };
+          if (node.id === sourceId && node.data.type === "channel") {
+            const targetNode = nodes.find((n) => n.id === targetId);
+            if (targetNode) {
+              const newOutputs = Array.from(
+                new Set([...(node.data.outputs || []), targetNode.id])
+              );
+              const newInputs = node.data.inputs || [];
+              const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
+                ", "
+              )})`;
+              return {
+                ...node,
+                data: { ...node.data, outputs: newOutputs, label: newLabel },
+              };
+            }
           }
-        }
-        return node;
-      })
-    );
-  }, []);
+          return node;
+        })
+      );
+    },
+    []
+  );
 
   const updateNodeData = useCallback(
     (key: string, value: string) => {
@@ -352,21 +374,6 @@ export default function Home() {
     [getDecodeSequence, updateNodeData]
   );
 
-  const onNodeDelete = useCallback(
-    (nodeId: string) => {
-      setMapNodes((nodes) => {
-        const nodeToDelete = nodes.find((node) => node.id === nodeId);
-        if (nodeToDelete && nodeToDelete.data.type === "decoded") {
-          const messageId = nodeToDelete.data.content;
-          const updatedNodes = nodes.filter((node) => node.id !== nodeId);
-          return updatedNodes;
-        }
-        return nodes.filter((node) => node.id !== nodeId);
-      });
-    },
-    [setMapNodes]
-  );
-
   const getNodeStyle = (nodeType: string): CSSProperties => {
     switch (nodeType) {
       case "encoder":
@@ -382,7 +389,7 @@ export default function Home() {
     if (node.data.type === "variable") {
       const label = node.data.label;
       const blockLength = node.data.blockLength;
-      
+
       if (blockLength && blockLength !== "1") {
         return `${label}^${blockLength}`;
       }
@@ -390,17 +397,26 @@ export default function Home() {
     return node.data.label;
   };
 
+  useEffect(() => {
+    console.log(additionalConditions);
+  }, [additionalConditions]);
+
   return (
-    <Box display={"flex"} height={"100vh"} width={"100vw"} flexDirection={"column"}>
-      <AppBar position="static">
+    <Box
+      display={"flex"}
+      height={"100vh"}
+      width={"100vw"}
+      flexDirection={"column"}
+      borderRadius={"8px"}
+    >
+      <AppBar position="static" sx={{ bgcolor: "black" }}>
         <Toolbar>
-          <Typography variant="h5">
-            User Platform for PSITIP
-          </Typography>
+          <Typography variant="h5">User Platform for PSITIP</Typography>
         </Toolbar>
       </AppBar>
-      <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center">
+      <Box flexGrow={1} display="flex" flexDirection={"row"}>
         <ReactFlow
+          colorMode="light"
           nodes={mapNodes.map((node) => ({
             ...node,
             style: getNodeStyle(node.data.type),
@@ -428,7 +444,7 @@ export default function Home() {
           <Background />
           <Controls position="top-left" orientation="horizontal">
             <ControlButton style={{ width: "auto" }} onClick={addMessageNode}>
-              Add Message
+              Add Source
             </ControlButton>
             <ControlButton style={{ width: "auto" }} onClick={addVariableNode}>
               Add Variable
@@ -450,6 +466,51 @@ export default function Home() {
             </ControlButton>
           </Controls>
         </ReactFlow>
+        <Box width={"25%"} display={"flex"} flexDirection={"column"}>
+          <AppBar position="static">
+            <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography variant="h5">Conditions</Typography>
+              <FaPlus
+                style={{
+                  cursor: "pointer",
+                  fontSize: "24px",
+                  margin: "8px",
+                }}
+                onClick={() => {
+                  setAdditionalConditions([...additionalConditions, ""]);
+                }}
+              />
+            </Toolbar>
+          </AppBar>
+          <Box flexGrow={1} bgcolor={"lightblue"}>
+            {additionalConditions.map((condition, index) => (
+              <Box
+                key={index}
+                margin={"8px"}
+                sx={{ display: "flex", alignItems: "center" }}
+              >
+                <Input
+                  placeholder="Condition"
+                  value={condition}
+                  onChange={(e) => {
+                    const newConditions = [...additionalConditions];
+                    newConditions[index] = e.target.value;
+                    setAdditionalConditions(newConditions);
+                  }}
+                  sx={{ flex: 1 }}
+                />
+                <MdDelete
+                  style={{ cursor: "pointer", margin: "8px" }}
+                  onClick={() => {
+                    const newConditions = [...additionalConditions];
+                    newConditions.splice(index, 1);
+                    setAdditionalConditions(newConditions);
+                  }}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
         {selectedNode && (
           <Box
             position="absolute"
@@ -462,7 +523,19 @@ export default function Home() {
             width="auto"
             height="auto"
           >
-            <Typography variant="h6">Edit Node</Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Typography variant="h6">Edit Node</Typography>
+              <RxCross1
+                onClick={() => setSelectedNode(null)}
+                style={{ cursor: "pointer" }}
+              />
+            </Box>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography>Label:</Typography>
@@ -538,8 +611,8 @@ export default function Home() {
   );
 }
 
-
-/* Put hat on Decoded M
+/* 
+Put hat on Decoded M
 Additional Information box
 Add source default S, decoded as S and can choose from sources.
 UI imporvements
