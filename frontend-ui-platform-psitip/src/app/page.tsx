@@ -152,11 +152,16 @@ export default function Home() {
     if (variableNodes.length > 0) {
       const lastVariable = variableNodes[variableNodes.length - 1];
       const lastVariableLabel = lastVariable.data.label;
-      const match = lastVariableLabel.match(/^([A-Z])(?:_(\d+))?$/);
+
+      const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
 
       if (match) {
-        const [_, letter] = match;
-        const nextIndex = variableSequence.indexOf(letter) + 1;
+        const [_, letter, blockLength] = match;
+        const nextBlockNumber = parseInt(blockLength) + 1;
+
+        nextVariableId = `${letter}_${nextBlockNumber}`;
+      } else {
+        const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
         if (nextIndex < variableSequence.length) {
           nextVariableId = variableSequence[nextIndex];
         }
@@ -173,7 +178,10 @@ export default function Home() {
         data: {
           type: "variable",
           label: nextVariableId,
-          content: `${nextVariableId}^${lastBlockLength}`,
+          content:
+            lastBlockLength === "1"
+              ? `${nextVariableId}`
+              : `${nextVariableId}^${lastBlockLength}`,
           rate: "",
           blockLength: lastBlockLength,
         },
