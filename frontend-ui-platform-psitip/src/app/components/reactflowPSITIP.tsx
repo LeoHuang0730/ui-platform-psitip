@@ -22,8 +22,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { RxCross1 } from "react-icons/rx";
-import { FaPlus } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
 
 export interface mapNode {
   id: string;
