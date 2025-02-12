@@ -50,25 +50,25 @@ export default function Home() {
     []
   );
 
-  useEffect(() => {
-    console.log(mapNodes);
-  }, [mapNodes]);
+  // useEffect(() => {
+  //   console.log(mapNodes);
+  // }, [mapNodes]);
 
-  useEffect(() => {
-    console.log(mapEdges);
-  }, [mapEdges]);
+  // useEffect(() => {
+  //   console.log(mapEdges);
+  // }, [mapEdges]);
 
-  useEffect(() => {
-    console.log(selectedNode);
-  }, [selectedNode]);
+  // useEffect(() => {
+  //   console.log(selectedNode);
+  // }, [selectedNode]);
 
-  useEffect(() => {
-    console.log(lastBlockLength);
-  }, [lastBlockLength]);
+  // useEffect(() => {
+  //   console.log(lastBlockLength);
+  // }, [lastBlockLength]);
 
-  useEffect(() => {
-    console.log(additionalConditions);
-  }, [additionalConditions]);
+  // useEffect(() => {
+  //   console.log(additionalConditions);
+  // }, [additionalConditions]);
 
   return (
     <Box
