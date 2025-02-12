@@ -19,9 +19,9 @@ interface SidebarRightProps {
 	setAdditionalConditions: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const SidebarRight = ({additionalConditions, setAdditionalConditions} : SidebarRightProps) => {
+const ConditionBar = ({additionalConditions, setAdditionalConditions} : SidebarRightProps) => {
 	return (
-		<Box width={"25%"} display={"flex"} flexDirection={"column"}>
+		<Box display={"flex"} flexDirection={"column"} height={"50%"}>
 			<AppBar position="static">
 				<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
 					<Typography variant="h5">Conditions</Typography>
@@ -69,4 +69,4 @@ const SidebarRight = ({additionalConditions, setAdditionalConditions} : SidebarR
 	)
 };
 
-export default SidebarRight
+export default ConditionBar

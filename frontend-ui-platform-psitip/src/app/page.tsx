@@ -16,7 +16,8 @@ import { MdDelete } from "react-icons/md";
 
 import Topbar from "./components/topbar";
 import ReactflowPSITIP from "./components/reactflowPSITIP";
-import SidebarRight from "./components/sidebarRight";
+import ConditionBar from "./components/conditionBar";
+import CodeBar from "./components/codeBar";
 
 interface mapNode {
   id: string;
@@ -90,10 +91,13 @@ export default function Home() {
           lastBlockLength={lastBlockLength}
           setLastBlockLength={setLastBlockLength}
         />
-        <SidebarRight 
-          additionalConditions={additionalConditions}
-          setAdditionalConditions={setAdditionalConditions}
-        />  
+        <Box display={"flex"} flexDirection={"column"}>
+          <ConditionBar 
+            additionalConditions={additionalConditions}
+            setAdditionalConditions={setAdditionalConditions}
+          />
+          <CodeBar />
+        </Box>
       </Box>
     </Box>
   );
