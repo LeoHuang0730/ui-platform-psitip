@@ -48,12 +48,27 @@ export interface mapEdge {
   target: string;
 }
 
-const ReactflowPSITIP = (
-  mapNodes: mapNode[], setMapNodes: any,
-  mapEdges: mapEdge[], setMapEdges: any,
-  selectedNode: mapNode | null, setSelectedNode: any,
-  lastBlockLength: number | string, setLastBlockLength: any
-) => {
+interface ReactflowPSITIPProps {
+  mapNodes: mapNode[];
+  setMapNodes: any;
+  mapEdges: mapEdge[];
+  setMapEdges: any;
+  selectedNode: mapNode | null;
+  setSelectedNode: any;
+  lastBlockLength: number | string;
+  setLastBlockLength: any;
+}
+
+const ReactflowPSITIP = ({
+  mapNodes,
+  setMapNodes,
+  mapEdges,
+  setMapEdges,
+  selectedNode,
+  setSelectedNode,
+  lastBlockLength,
+  setLastBlockLength
+}: ReactflowPSITIPProps) => {
 
   let variableSequence = ["X", "Y", "Z", "W", "T", "Q"];
 
