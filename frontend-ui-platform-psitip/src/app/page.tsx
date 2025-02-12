@@ -25,6 +25,9 @@ import { RxCross1 } from "react-icons/rx";
 import { FaPlus } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 
+import Topbar from "./components/topbar";
+import ReactflowPSITIP from "./components/reactflowPSITIP";
+
 interface mapNode {
   id: string;
   position: {
@@ -48,7 +51,7 @@ interface mapEdge {
   target: string;
 }
 
-let variableSequence = ["X", "Y", "Z", "W", "T", "Q"]; // Sequence of variable names
+let variableSequence = ["X", "Y", "Z", "W", "T", "Q"];
 
 export default function Home() {
   const [mapNodes, setMapNodes] = useState<mapNode[]>([]);
@@ -59,351 +62,351 @@ export default function Home() {
     []
   );
 
-  const onNodesChange = useCallback(
-    (changes: any) => setMapNodes((nds) => applyNodeChanges(changes, nds)),
-    []
-  );
+  // const onNodesChange = useCallback(
+  //   (changes: any) => setMapNodes((nds) => applyNodeChanges(changes, nds)),
+  //   []
+  // );
 
-  const onEdgesChange = useCallback(
-    (changes: any) => setMapEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
+  // const onEdgesChange = useCallback(
+  //   (changes: any) => setMapEdges((eds) => applyEdgeChanges(changes, eds)),
+  //   []
+  // );
 
-  const onEdgesDelete = useCallback((edges: mapEdge[]) => {
-    edges.forEach(() => {
-      setMapNodes((nodes) =>
-        nodes.map((node) => {
-          if (node.data.type === "channel") {
-            const newInputs = (node.data.inputs || []).filter(
-              (input) =>
-                !edges.some((e) => e.source === input && e.target === node.id)
-            );
-            const newOutputs = (node.data.outputs || []).filter(
-              (output) =>
-                !edges.some((e) => e.source === node.id && e.target === output)
-            );
-            const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
-              ", "
-            )})`;
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                inputs: newInputs,
-                outputs: newOutputs,
-                label: newLabel,
-              },
-            };
-          }
-          return node;
-        })
-      );
-    });
-  }, []);
+  // const onEdgesDelete = useCallback((edges: mapEdge[]) => {
+  //   edges.forEach(() => {
+  //     setMapNodes((nodes) =>
+  //       nodes.map((node) => {
+  //         if (node.data.type === "channel") {
+  //           const newInputs = (node.data.inputs || []).filter(
+  //             (input) =>
+  //               !edges.some((e) => e.source === input && e.target === node.id)
+  //           );
+  //           const newOutputs = (node.data.outputs || []).filter(
+  //             (output) =>
+  //               !edges.some((e) => e.source === node.id && e.target === output)
+  //           );
+  //           const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
+  //             ", "
+  //           )})`;
+  //           return {
+  //             ...node,
+  //             data: {
+  //               ...node.data,
+  //               inputs: newInputs,
+  //               outputs: newOutputs,
+  //               label: newLabel,
+  //             },
+  //           };
+  //         }
+  //         return node;
+  //       })
+  //     );
+  //   });
+  // }, []);
 
-  const onConnect = useCallback((params: any) => {
-    setMapEdges((eds) => addEdge(params, eds));
-    updateChannelLabel(params.source, params.target);
-  }, []);
+  // const onConnect = useCallback((params: any) => {
+  //   setMapEdges((eds) => addEdge(params, eds));
+  //   updateChannelLabel(params.source, params.target);
+  // }, []);
 
-  const addMessageNode = useCallback(() => {
-    const messageNodes = mapNodes.filter(
-      (node) => node.data.type === "message"
-    );
-    const existingMessageNumbers = messageNodes
-      .map((node) => parseInt(node.id.replace("S", ""), 10))
-      .sort((a, b) => a - b);
+  // const addMessageNode = useCallback(() => {
+  //   const messageNodes = mapNodes.filter(
+  //     (node) => node.data.type === "message"
+  //   );
+  //   const existingMessageNumbers = messageNodes
+  //     .map((node) => parseInt(node.id.replace("S", ""), 10))
+  //     .sort((a, b) => a - b);
 
-    let newMessageNumber = 1;
-    for (let i = 0; i < existingMessageNumbers.length; i++) {
-      if (existingMessageNumbers[i] !== newMessageNumber) {
-        break;
-      }
-      newMessageNumber++;
-    }
+  //   let newMessageNumber = 1;
+  //   for (let i = 0; i < existingMessageNumbers.length; i++) {
+  //     if (existingMessageNumbers[i] !== newMessageNumber) {
+  //       break;
+  //     }
+  //     newMessageNumber++;
+  //   }
 
-    const newId = `S${newMessageNumber}`;
-    const newRate = `R${newMessageNumber}`;
+  //   const newId = `S${newMessageNumber}`;
+  //   const newRate = `R${newMessageNumber}`;
 
-    setMapNodes((mapNodes) => [
-      ...mapNodes,
-      {
-        id: newId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 0, y: messageNodes.length * 50 },
-        data: {
-          type: "message",
-          label: newId,
-          content: `Message ${newMessageNumber}`,
-          rate: newRate,
-        },
-      },
-    ]);
-  }, [mapNodes]);
+  //   setMapNodes((mapNodes) => [
+  //     ...mapNodes,
+  //     {
+  //       id: newId,
+  //       sourcePosition: "right",
+  //       targetPosition: "left",
+  //       position: { x: 0, y: messageNodes.length * 50 },
+  //       data: {
+  //         type: "message",
+  //         label: newId,
+  //         content: `Message ${newMessageNumber}`,
+  //         rate: newRate,
+  //       },
+  //     },
+  //   ]);
+  // }, [mapNodes]);
 
-  const addVariableNode = useCallback(() => {
-    const variableNodes = mapNodes.filter(
-      (node) => node.data.type === "variable"
-    );
+  // const addVariableNode = useCallback(() => {
+  //   const variableNodes = mapNodes.filter(
+  //     (node) => node.data.type === "variable"
+  //   );
 
-    let nextVariableId = "X";
+  //   let nextVariableId = "X";
 
-    if (variableNodes.length > 0) {
-      const lastVariable = variableNodes[variableNodes.length - 1];
-      const lastVariableLabel = lastVariable.data.label;
+  //   if (variableNodes.length > 0) {
+  //     const lastVariable = variableNodes[variableNodes.length - 1];
+  //     const lastVariableLabel = lastVariable.data.label;
 
-      const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
+  //     const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
 
-      if (match) {
-        const [_, letter, blockLength] = match;
-        const nextBlockNumber = parseInt(blockLength) + 1;
+  //     if (match) {
+  //       const [_, letter, blockLength] = match;
+  //       const nextBlockNumber = parseInt(blockLength) + 1;
 
-        nextVariableId = `${letter}_${nextBlockNumber}`;
-      } else {
-        const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
-        if (nextIndex < variableSequence.length) {
-          nextVariableId = variableSequence[nextIndex];
-        }
-      }
-    }
+  //       nextVariableId = `${letter}_${nextBlockNumber}`;
+  //     } else {
+  //       const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
+  //       if (nextIndex < variableSequence.length) {
+  //         nextVariableId = variableSequence[nextIndex];
+  //       }
+  //     }
+  //   }
 
-    setMapNodes((mapNodes) => [
-      ...mapNodes,
-      {
-        id: nextVariableId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 50, y: variableNodes.length * 50 },
-        data: {
-          type: "variable",
-          label: nextVariableId,
-          content:
-            lastBlockLength === "1"
-              ? `${nextVariableId}`
-              : `${nextVariableId}^${lastBlockLength}`,
-          rate: "",
-          blockLength: lastBlockLength,
-        },
-      },
-    ]);
-  }, [mapNodes, lastBlockLength]);
+  //   setMapNodes((mapNodes) => [
+  //     ...mapNodes,
+  //     {
+  //       id: nextVariableId,
+  //       sourcePosition: "right",
+  //       targetPosition: "left",
+  //       position: { x: 50, y: variableNodes.length * 50 },
+  //       data: {
+  //         type: "variable",
+  //         label: nextVariableId,
+  //         content:
+  //           lastBlockLength === "1"
+  //             ? `${nextVariableId}`
+  //             : `${nextVariableId}^${lastBlockLength}`,
+  //         rate: "",
+  //         blockLength: lastBlockLength,
+  //       },
+  //     },
+  //   ]);
+  // }, [mapNodes, lastBlockLength]);
 
-  const addEncoderNode = useCallback(() => {
-    const encoderNodes = mapNodes.filter(
-      (node) => node.data.type === "encoder"
-    );
-    const encoderId = `Enc${encoderNodes.length + 1}`;
-    setMapNodes((mapNodes) => [
-      ...mapNodes,
-      {
-        id: encoderId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 100, y: encoderNodes.length * 50 },
-        data: {
-          type: "encoder",
-          label: encoderId,
-          content: `Encoder ${encoderId}`,
-          rate: "",
-        },
-      },
-    ]);
-  }, [mapNodes]);
+  // const addEncoderNode = useCallback(() => {
+  //   const encoderNodes = mapNodes.filter(
+  //     (node) => node.data.type === "encoder"
+  //   );
+  //   const encoderId = `Enc${encoderNodes.length + 1}`;
+  //   setMapNodes((mapNodes) => [
+  //     ...mapNodes,
+  //     {
+  //       id: encoderId,
+  //       sourcePosition: "right",
+  //       targetPosition: "left",
+  //       position: { x: 100, y: encoderNodes.length * 50 },
+  //       data: {
+  //         type: "encoder",
+  //         label: encoderId,
+  //         content: `Encoder ${encoderId}`,
+  //         rate: "",
+  //       },
+  //     },
+  //   ]);
+  // }, [mapNodes]);
 
-  const addDecoderNode = useCallback(() => {
-    const decoderNodes = mapNodes.filter(
-      (node) => node.data.type === "decoder"
-    );
-    const decoderId = `Dec${decoderNodes.length + 1}`;
-    setMapNodes((mapNodes) => [
-      ...mapNodes,
-      {
-        id: decoderId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 150, y: decoderNodes.length * 50 },
-        data: {
-          type: "decoder",
-          label: decoderId,
-          content: `Decoder ${decoderId}`,
-          rate: "",
-        },
-      },
-    ]);
-  }, [mapNodes]);
+  // const addDecoderNode = useCallback(() => {
+  //   const decoderNodes = mapNodes.filter(
+  //     (node) => node.data.type === "decoder"
+  //   );
+  //   const decoderId = `Dec${decoderNodes.length + 1}`;
+  //   setMapNodes((mapNodes) => [
+  //     ...mapNodes,
+  //     {
+  //       id: decoderId,
+  //       sourcePosition: "right",
+  //       targetPosition: "left",
+  //       position: { x: 150, y: decoderNodes.length * 50 },
+  //       data: {
+  //         type: "decoder",
+  //         label: decoderId,
+  //         content: `Decoder ${decoderId}`,
+  //         rate: "",
+  //       },
+  //     },
+  //   ]);
+  // }, [mapNodes]);
 
-  const addDecodedMessageNode = useCallback(() => {
-    const decodedMessageNodes = mapNodes.filter(
-      (node) => node.data.type === "decoded"
-    );
-    const decodedMessageId = `DM${
-      mapNodes.filter((node) => node.data.type === "decoded").length + 1
-    }`;
-    setMapNodes((mapNodes) => [
-      ...mapNodes,
-      {
-        id: decodedMessageId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 200, y: decodedMessageNodes.length * 50 },
-        data: {
-          type: "decoded",
-          label: decodedMessageId,
-          content: `Decoded Message ${decodedMessageId}`,
-          rate: "",
-        },
-      },
-    ]);
-  }, [mapNodes]);
+  // const addDecodedMessageNode = useCallback(() => {
+  //   const decodedMessageNodes = mapNodes.filter(
+  //     (node) => node.data.type === "decoded"
+  //   );
+  //   const decodedMessageId = `DM${
+  //     mapNodes.filter((node) => node.data.type === "decoded").length + 1
+  //   }`;
+  //   setMapNodes((mapNodes) => [
+  //     ...mapNodes,
+  //     {
+  //       id: decodedMessageId,
+  //       sourcePosition: "right",
+  //       targetPosition: "left",
+  //       position: { x: 200, y: decodedMessageNodes.length * 50 },
+  //       data: {
+  //         type: "decoded",
+  //         label: decodedMessageId,
+  //         content: `Decoded Message ${decodedMessageId}`,
+  //         rate: "",
+  //       },
+  //     },
+  //   ]);
+  // }, [mapNodes]);
 
-  const addChannelNode = useCallback(() => {
-    const channelNodes = mapNodes.filter(
-      (node) => node.data.type === "channel"
-    );
-    const channelId = `C${channelNodes.length + 1}`;
-    setMapNodes((mapNodes) => [
-      ...mapNodes,
-      {
-        id: channelId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 250, y: channelNodes.length * 50 },
-        data: {
-          type: "channel",
-          label: "P( | )",
-          content: `Channel ${channelId}`,
-          rate: "",
-          inputs: [],
-          outputs: [],
-        },
-      },
-    ]);
-  }, [mapNodes]);
+  // const addChannelNode = useCallback(() => {
+  //   const channelNodes = mapNodes.filter(
+  //     (node) => node.data.type === "channel"
+  //   );
+  //   const channelId = `C${channelNodes.length + 1}`;
+  //   setMapNodes((mapNodes) => [
+  //     ...mapNodes,
+  //     {
+  //       id: channelId,
+  //       sourcePosition: "right",
+  //       targetPosition: "left",
+  //       position: { x: 250, y: channelNodes.length * 50 },
+  //       data: {
+  //         type: "channel",
+  //         label: "P( | )",
+  //         content: `Channel ${channelId}`,
+  //         rate: "",
+  //         inputs: [],
+  //         outputs: [],
+  //       },
+  //     },
+  //   ]);
+  // }, [mapNodes]);
 
-  const updateChannelLabel = useCallback(
-    (sourceId: string, targetId: string) => {
-      setMapNodes((nodes) =>
-        nodes.map((node) => {
-          if (node.id === targetId && node.data.type === "channel") {
-            const sourceNode = nodes.find((n) => n.id === sourceId);
-            if (sourceNode) {
-              const newInputs = Array.from(
-                new Set([...(node.data.inputs || []), sourceNode.id])
-              );
-              const newOutputs = node.data.outputs || [];
-              const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
-                ", "
-              )})`;
-              return {
-                ...node,
-                data: { ...node.data, inputs: newInputs, label: newLabel },
-              };
-            }
-          }
-          if (node.id === sourceId && node.data.type === "channel") {
-            const targetNode = nodes.find((n) => n.id === targetId);
-            if (targetNode) {
-              const newOutputs = Array.from(
-                new Set([...(node.data.outputs || []), targetNode.id])
-              );
-              const newInputs = node.data.inputs || [];
-              const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
-                ", "
-              )})`;
-              return {
-                ...node,
-                data: { ...node.data, outputs: newOutputs, label: newLabel },
-              };
-            }
-          }
-          return node;
-        })
-      );
-    },
-    []
-  );
+  // const updateChannelLabel = useCallback(
+  //   (sourceId: string, targetId: string) => {
+  //     setMapNodes((nodes) =>
+  //       nodes.map((node) => {
+  //         if (node.id === targetId && node.data.type === "channel") {
+  //           const sourceNode = nodes.find((n) => n.id === sourceId);
+  //           if (sourceNode) {
+  //             const newInputs = Array.from(
+  //               new Set([...(node.data.inputs || []), sourceNode.id])
+  //             );
+  //             const newOutputs = node.data.outputs || [];
+  //             const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
+  //               ", "
+  //             )})`;
+  //             return {
+  //               ...node,
+  //               data: { ...node.data, inputs: newInputs, label: newLabel },
+  //             };
+  //           }
+  //         }
+  //         if (node.id === sourceId && node.data.type === "channel") {
+  //           const targetNode = nodes.find((n) => n.id === targetId);
+  //           if (targetNode) {
+  //             const newOutputs = Array.from(
+  //               new Set([...(node.data.outputs || []), targetNode.id])
+  //             );
+  //             const newInputs = node.data.inputs || [];
+  //             const newLabel = `P(${newOutputs.join(", ")} | ${newInputs.join(
+  //               ", "
+  //             )})`;
+  //             return {
+  //               ...node,
+  //               data: { ...node.data, outputs: newOutputs, label: newLabel },
+  //             };
+  //           }
+  //         }
+  //         return node;
+  //       })
+  //     );
+  //   },
+  //   []
+  // );
 
-  const updateNodeData = useCallback(
-    (key: string, value: string) => {
-      if (!selectedNode) return;
-      setMapNodes((nodes) =>
-        nodes.map((node) =>
-          node.id === selectedNode.id
-            ? { ...node, data: { ...node.data, [key]: value } }
-            : node
-        )
-      );
-      setSelectedNode((prev) =>
-        prev ? { ...prev, data: { ...prev.data, [key]: value } } : null
-      );
+  // const updateNodeData = useCallback(
+  //   (key: string, value: string) => {
+  //     if (!selectedNode) return;
+  //     setMapNodes((nodes) =>
+  //       nodes.map((node) =>
+  //         node.id === selectedNode.id
+  //           ? { ...node, data: { ...node.data, [key]: value } }
+  //           : node
+  //       )
+  //     );
+  //     setSelectedNode((prev) =>
+  //       prev ? { ...prev, data: { ...prev.data, [key]: value } } : null
+  //     );
 
-      if (selectedNode.data.type === "variable" && key === "blockLength") {
-        setLastBlockLength(value);
-      }
-    },
-    [selectedNode]
-  );
+  //     if (selectedNode.data.type === "variable" && key === "blockLength") {
+  //       setLastBlockLength(value);
+  //     }
+  //   },
+  //   [selectedNode]
+  // );
 
-  const getDecodeSequence = useCallback(
-    (messageId: string) => {
-      const decodedNodes = mapNodes
-        .filter(
-          (node) =>
-            node.data.type === "decoded" && node.data.content === messageId
-        )
-        .map((node) => {
-          const match = node.data.label.match(/^.+,(\d+)$/);
-          return match ? parseInt(match[1], 10) : null;
-        })
-        .filter((num) => num !== null) as number[];
+  // const getDecodeSequence = useCallback(
+  //   (messageId: string) => {
+  //     const decodedNodes = mapNodes
+  //       .filter(
+  //         (node) =>
+  //           node.data.type === "decoded" && node.data.content === messageId
+  //       )
+  //       .map((node) => {
+  //         const match = node.data.label.match(/^.+,(\d+)$/);
+  //         return match ? parseInt(match[1], 10) : null;
+  //       })
+  //       .filter((num) => num !== null) as number[];
 
-      decodedNodes.sort((a, b) => a - b);
+  //     decodedNodes.sort((a, b) => a - b);
 
-      let nextSequence = 1;
-      for (let i = 0; i < decodedNodes.length; i++) {
-        if (decodedNodes[i] !== nextSequence) {
-          break;
-        }
-        nextSequence++;
-      }
+  //     let nextSequence = 1;
+  //     for (let i = 0; i < decodedNodes.length; i++) {
+  //       if (decodedNodes[i] !== nextSequence) {
+  //         break;
+  //       }
+  //       nextSequence++;
+  //     }
 
-      return nextSequence;
-    },
-    [mapNodes]
-  );
+  //     return nextSequence;
+  //   },
+  //   [mapNodes]
+  // );
 
-  const handleDecoderChange = useCallback(
-    (selectedMessageId: string) => {
-      const nextSequence = getDecodeSequence(selectedMessageId);
-      const newLabel = `${selectedMessageId},${nextSequence}`;
-      updateNodeData("label", newLabel);
-    },
-    [getDecodeSequence, updateNodeData]
-  );
+  // const handleDecoderChange = useCallback(
+  //   (selectedMessageId: string) => {
+  //     const nextSequence = getDecodeSequence(selectedMessageId);
+  //     const newLabel = `${selectedMessageId},${nextSequence}`;
+  //     updateNodeData("label", newLabel);
+  //   },
+  //   [getDecodeSequence, updateNodeData]
+  // );
 
-  const getNodeStyle = (nodeType: string): CSSProperties => {
-    switch (nodeType) {
-      case "encoder":
-      case "decoder":
-      case "channel":
-        return { width: "auto", height: "auto", borderRadius: "0%" };
-      default:
-        return { width: "auto", height: "auto", borderRadius: "50%" };
-    }
-  };
+  // const getNodeStyle = (nodeType: string): CSSProperties => {
+  //   switch (nodeType) {
+  //     case "encoder":
+  //     case "decoder":
+  //     case "channel":
+  //       return { width: "auto", height: "auto", borderRadius: "0%" };
+  //     default:
+  //       return { width: "auto", height: "auto", borderRadius: "50%" };
+  //   }
+  // };
 
-  const getNodeLabel = (node: mapNode) => {
-    if (node.data.type === "variable") {
-      const label = node.data.label;
-      const blockLength = node.data.blockLength;
+  // const getNodeLabel = (node: mapNode) => {
+  //   if (node.data.type === "variable") {
+  //     const label = node.data.label;
+  //     const blockLength = node.data.blockLength;
 
-      if (blockLength && blockLength !== "1") {
-        return `${label}^${blockLength}`;
-      }
-    }
-    return node.data.label;
-  };
+  //     if (blockLength && blockLength !== "1") {
+  //       return `${label}^${blockLength}`;
+  //     }
+  //   }
+  //   return node.data.label;
+  // };
 
   useEffect(() => {
     console.log(additionalConditions);
@@ -417,13 +420,9 @@ export default function Home() {
       flexDirection={"column"}
       borderRadius={"8px"}
     >
-      <AppBar position="static" sx={{ bgcolor: "black" }}>
-        <Toolbar>
-          <Typography variant="h5">User Platform for PSITIP</Typography>
-        </Toolbar>
-      </AppBar>
+      <Topbar />
       <Box flexGrow={1} display="flex" flexDirection={"row"}>
-        <ReactFlow
+        {/* <ReactFlow
           colorMode="light"
           nodes={mapNodes.map((node) => ({
             ...node,
@@ -473,7 +472,17 @@ export default function Home() {
               Add Channel
             </ControlButton>
           </Controls>
-        </ReactFlow>
+        </ReactFlow> */}
+        <ReactflowPSITIP
+          mapNodes={mapNodes}
+          setMapNodes={setMapNodes}
+          mapEdges={mapEdges}
+          setMapEdges={setMapEdges}
+          selectedNode={selectedNode}
+          setSelectedNode={setSelectedNode}
+          lastBlockLength={lastBlockLength}
+          setLastBlockLength={setLastBlockLength}
+        />
         <Box width={"25%"} display={"flex"} flexDirection={"column"}>
           <AppBar position="static">
             <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -519,7 +528,7 @@ export default function Home() {
             ))}
           </Box>
         </Box>
-        {selectedNode && (
+        {/* {selectedNode && (
           <Box
             position="absolute"
             top={0}
@@ -613,7 +622,7 @@ export default function Home() {
               )}
             </Box>
           </Box>
-        )}
+        )} */}
       </Box>
     </Box>
   );
