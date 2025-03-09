@@ -23,28 +23,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { RxCross1 } from "react-icons/rx";
 
-export interface mapNode {
-  id: string;
-  position: {
-    x: number;
-    y: number;
-  };
-  data: {
-    type: string;
-    label: string;
-    content: string;
-    rate: string;
-    blockLength?: number | string;
-    inputs?: string[];
-    outputs?: string[];
-  };
-}
-
-export interface mapEdge {
-  id: string;
-  source: string;
-  target: string;
-}
+import { mapNode, mapEdge } from "../page";
 
 interface ReactflowPSITIPProps {
   mapNodes: mapNode[];

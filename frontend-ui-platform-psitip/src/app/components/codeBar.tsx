@@ -1,32 +1,180 @@
-"use client";
-import React, { CSSProperties, useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
   Button,
-  Input,
-  Select,
-  MenuItem,
-	AppBar,
+  AppBar,
   Toolbar,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import "@xyflow/react/dist/style.css";
-import { FaPlus } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
+import { FaCopy } from "react-icons/fa";
+import { mapNode, mapEdge } from "../page";
 
-const CodeBar = () => {
-	return (
-		<Box sx={{ display: "flex", flexDirection: "column", bgcolor: "grey", height: "50%" }}>
-			<AppBar position="static">
-				<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-					<Typography variant="h5">Code</Typography>
-				</Toolbar>
-			</AppBar>
-			<Box flexGrow={1} bgcolor={"lightblue"}>
-				<Typography variant="body1">Code Here</Typography>
-			</Box>
-		</Box>
-	);
+interface codeBarProps {
+  mapNodes: mapNode[];
+  mapEdges: mapEdge[];
+}
+
+export const codeTranslator = (mapNodes: mapNode[], mapEdges: mapEdge[]): string => {
+  let pythonCode = `# Auto-generated Python Code from ReactFlow Data Structure\n\n`;
+
+  // Extract core variables (only base, not power)
+  let coreVariables = mapNodes
+    .filter((node) => node.data.type === "variable")
+    .map((node) => node.data.content.split("^")[0].trim());
+
+  if (coreVariables.length > 0) {
+    pythonCode += `${coreVariables.join(", ")} = rv("${coreVariables.join(", ")}")\n\n`;
+  }
+
+  let sourceMessages: string[] = [];
+  let rateVariables: string[] = [];
+  let encoderNodes: string[] = [];
+  let decoderNodes: { [key: string]: { id: string; inputVar: string } } = {};
+
+  // Step 1: Define Messages and Rates
+  pythonCode += `# Step 1: Define Messages and Rates\n`;
+  mapNodes.forEach((node) => {
+    const nodeId = node.id;
+    const { type, rate } = node.data;
+
+    if (type === "message") {
+      sourceMessages.push(nodeId);
+      if (rate) {
+        rateVariables.push(`R${sourceMessages.length}`);
+      }
+    } else if (type === "encoder") {
+      encoderNodes.push(nodeId);
+    } else if (type === "decoder") {
+      decoderNodes[nodeId] = { id: nodeId, inputVar: "" };
+    }
+  });
+
+  const messageArraySize = sourceMessages.length > 0 ? sourceMessages.length + 1 : 2;
+  const rateArraySize = rateVariables.length > 0 ? rateVariables.length + 1 : 2;
+
+  if (sourceMessages.length > 0) {
+    pythonCode += `${sourceMessages.join(", ")} = rv_array("S", 1, ${messageArraySize})  # Source Messages\n`;
+  }
+
+  if (rateVariables.length > 0) {
+    pythonCode += `${rateVariables.join(", ")} = real_array("R", 1, ${rateArraySize})  # Rate Variables\n`;
+  }
+
+  pythonCode += `\n# Step 2: Initialize the Coding Model\n`;
+  pythonCode += `model = CodingModel()\n\n`;
+
+  // Step 3: Add Encoder Nodes
+  pythonCode += `# Step 3: Add Encoder Nodes\n`;
+  encoderNodes.forEach((nodeId) => {
+    const node = mapNodes.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    const inputVars = mapEdges
+      .filter((edge) => edge.target === nodeId)
+      .map((edge) =>
+        sourceMessages.includes(edge.source) ? edge.source : edge.source
+      )
+      .join(" + ");
+
+    pythonCode += `model.add_node(${inputVars}, ${coreVariables[0]}, label="${node.data.label}")  # Encoder Node\n`;
+  });
+
+  // Step 4: Add Edges
+  pythonCode += `\n# Step 4: Add Edges\n`;
+  mapEdges.forEach((edge) => {
+    const sourceNode = mapNodes.find((n) => n.id === edge.source);
+    const targetNode = mapNodes.find((n) => n.id === edge.target);
+
+    if (
+      sourceNode &&
+      targetNode &&
+      sourceNode.data.type === "variable" &&
+      targetNode.data.type === "variable"
+    ) {
+      pythonCode += `model.add_edge(${edge.source}, ${edge.target})  # Edge from ${edge.source} to ${edge.target}\n`;
+    }
+  });
+
+  // Step 5: Add Decoder Nodes
+  pythonCode += `\n# Step 5: Add Decoder Nodes\n`;
+  Object.values(decoderNodes).forEach(({ id }) => {
+    const node = mapNodes.find((n) => n.id === id);
+    if (!node) return;
+
+    const inputEdge = mapEdges.find((edge) => edge.target === id);
+    if (inputEdge) {
+      decoderNodes[id].inputVar = inputEdge.source;
+    }
+
+    const outputEdge = mapEdges.find((edge) => edge.source === id);
+    if (outputEdge) {
+      const outputNode = mapNodes.find((n) => n.id === outputEdge.target);
+      if (outputNode) {
+        const outputVar = outputNode.data.content;
+        if (outputVar) {
+          pythonCode += `model.add_node(${decoderNodes[id].inputVar}, ${outputVar}, label="${node.data.label}")  # Decoder Node\n`;
+        }
+      }
+    }
+  });
+
+  // Step 6: Set Message Rates
+  pythonCode += `\n# Step 6: Set Message Rates\n`;
+  sourceMessages.forEach((msg, index) => {
+    if (rateVariables[index]) {
+      pythonCode += `model.set_rate(${msg}, ${rateVariables[index]})  # Rate of ${msg} is ${rateVariables[index]}\n`;
+    }
+  });
+
+  pythonCode += `\n# Step 7: Generate and Display Model Graph\n`;
+  pythonCode += `model.graph()\n`;
+
+  return pythonCode;
+};
+
+const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    const translatedCode = codeTranslator(mapNodes, mapEdges);
+    navigator.clipboard.writeText(translatedCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Hide tooltip after 2 seconds
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "grey",
+        height: "50%",
+      }}
+    >
+      <AppBar position="static">
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography variant="h5">Code</Typography>
+          {/* Copy Button with Tooltip */}
+          <Tooltip title={"Copied!"} open={copied} arrow>
+            <IconButton color="inherit" onClick={handleCopy}>
+              <FaCopy />
+            </IconButton>
+          </Tooltip>
+        </Toolbar>
+      </AppBar>
+      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>
+        <Typography
+          variant="body1"
+          component="pre"
+          sx={{ whiteSpace: "pre-wrap" }}
+        >
+          {codeTranslator(mapNodes, mapEdges)}
+        </Typography>
+      </Box>
+    </Box>
+  );
 };
 
 export default CodeBar;

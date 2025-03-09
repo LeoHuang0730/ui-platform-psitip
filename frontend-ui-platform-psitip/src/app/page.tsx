@@ -19,7 +19,7 @@ import ReactflowPSITIP from "./components/reactflowPSITIP";
 import ConditionBar from "./components/conditionBar";
 import CodeBar from "./components/codeBar";
 
-interface mapNode {
+export interface mapNode {
   id: string;
   position: {
     x: number;
@@ -36,7 +36,7 @@ interface mapNode {
   };
 }
 
-interface mapEdge {
+export interface mapEdge {
   id: string;
   source: string;
   target: string;
@@ -51,13 +51,13 @@ export default function Home() {
     []
   );
 
-  // useEffect(() => {
-  //   console.log(mapNodes);
-  // }, [mapNodes]);
+  useEffect(() => {
+    console.log(mapNodes);
+  }, [mapNodes]);
 
-  // useEffect(() => {
-  //   console.log(mapEdges);
-  // }, [mapEdges]);
+  useEffect(() => {
+    console.log(mapEdges);
+  }, [mapEdges]);
 
   // useEffect(() => {
   //   console.log(selectedNode);
@@ -80,23 +80,38 @@ export default function Home() {
       borderRadius={"8px"}
     >
       <Topbar />
-      <Box flexGrow={1} display="flex" flexDirection={"row"}>
-        <ReactflowPSITIP
-          mapNodes={mapNodes}
-          setMapNodes={setMapNodes}
-          mapEdges={mapEdges}
-          setMapEdges={setMapEdges}
-          selectedNode={selectedNode}
-          setSelectedNode={setSelectedNode}
-          lastBlockLength={lastBlockLength}
-          setLastBlockLength={setLastBlockLength}
-        />
-        <Box display={"flex"} flexDirection={"column"}>
-          <ConditionBar 
-            additionalConditions={additionalConditions}
-            setAdditionalConditions={setAdditionalConditions}
+      <Box display="flex" flexDirection="row" height="100vh">
+        {/* Left Side: ReactflowPSITIP (Expands to fit available height) */}
+        <Box flex={3} display="flex" minHeight={0} overflow="hidden">
+          <ReactflowPSITIP
+            mapNodes={mapNodes}
+            setMapNodes={setMapNodes}
+            mapEdges={mapEdges}
+            setMapEdges={setMapEdges}
+            selectedNode={selectedNode}
+            setSelectedNode={setSelectedNode}
+            lastBlockLength={lastBlockLength}
+            setLastBlockLength={setLastBlockLength}
           />
-          <CodeBar />
+        </Box>
+
+        {/* Right Side: ConditionBar + CodeBar (Scrolls when needed) */}
+        <Box
+          flex={1}
+          display="flex"
+          flexDirection="column"
+          minHeight={0}
+          overflow="auto"
+        >
+          <Box flexShrink={0}>
+            <ConditionBar
+              additionalConditions={additionalConditions}
+              setAdditionalConditions={setAdditionalConditions}
+            />
+          </Box>
+          <Box flexShrink={0}>
+            <CodeBar mapNodes={mapNodes} mapEdges={mapEdges} />
+          </Box>
         </Box>
       </Box>
     </Box>
