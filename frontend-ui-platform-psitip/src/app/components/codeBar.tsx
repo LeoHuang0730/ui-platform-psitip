@@ -167,24 +167,7 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
           </Tooltip>
         </Toolbar>
       </AppBar>
-      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>
-        <Typography
-          variant="body1"
-          component="pre"
-          sx={{
-            whiteSpace: "pre-wrap",
-            fontFamily: "monospace",
-            fontSize: "0.875rem",
-            backgroundColor: "#f5f5f5",
-            padding: "1rem",
-            borderRadius: "0.5rem",
-            overflowX: "auto",
-            border: "1px solid #e0e0e0",
-          }}
-        >
-          {codeTranslator(mapNodes, mapEdges)}
-        </Typography>   
-        <Box height={"16px"} />       
+      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>      
         <Typography
             variant="body1"
             component="pre"
@@ -206,6 +189,23 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
           >
             Here
           </Link>
+        </Typography>   
+        <Box height={"16px"} /> 
+        <Typography
+          variant="body1"
+          component="pre"
+          sx={{
+            whiteSpace: "pre-wrap",
+            fontFamily: "monospace",
+            fontSize: "0.875rem",
+            backgroundColor: "#f5f5f5",
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            overflowX: "auto",
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          {codeTranslator(mapNodes, mapEdges)}
         </Typography>
       </Box>
     </Box>
