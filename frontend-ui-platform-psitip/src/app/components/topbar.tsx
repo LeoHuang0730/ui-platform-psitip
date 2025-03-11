@@ -17,15 +17,15 @@ const Topbar = () => {
 		<AppBar position="static" sx={{ bgcolor: "black" }}>
 			<Toolbar>
 				<Box sx={{ display: 'flex', flexDirection: 'column' }}>
-					<Typography variant="h3">User Platform for PSITIP</Typography>
-					<Typography variant="subtitle1">Test Your Code&nbsp;
-						<Link 
-							href="https://mybinder.org/v2/gh/cheuktingli/psitip/master?labpath=examples/table_of_contents.ipynb"
-							target="_blank"
-						>
-							Here
-						</Link>
-					</Typography>
+						<Typography variant="h3">User Platform for PSITIP</Typography>
+						<Typography variant="subtitle1">PSITIP Github Repo can be found&nbsp;
+							<Link 
+								href="https://github.com/cheuktingli/psitip"
+								target="_blank"
+							>
+								Here
+							</Link>
+						</Typography>
 				</Box>
 			</Toolbar>
 		</AppBar>

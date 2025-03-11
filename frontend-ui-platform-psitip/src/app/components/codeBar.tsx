@@ -7,6 +7,7 @@ import {
   Toolbar,
   IconButton,
   Tooltip,
+  Link,
 } from "@mui/material";
 import { FaCopy } from "react-icons/fa";
 import { mapNode, mapEdge } from "../page";
@@ -155,7 +156,9 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
     >
       <AppBar position="static">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h5">Code</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Typography variant="h5">Code</Typography>
+          </Box>
           {/* Copy Button with Tooltip */}
           <Tooltip title={"Copied!"} open={copied} arrow>
             <IconButton color="inherit" onClick={handleCopy}>
@@ -164,11 +167,28 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
           </Tooltip>
         </Toolbar>
       </AppBar>
-      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>
+      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>          
+        <Typography variant="subtitle1">Test Your Code&nbsp;
+          <Link 
+            href="https://mybinder.org/v2/gh/cheuktingli/psitip/master?labpath=examples/table_of_contents.ipynb"
+            target="_blank"
+          >
+            Here
+          </Link>
+        </Typography>
         <Typography
           variant="body1"
           component="pre"
-          sx={{ whiteSpace: "pre-wrap" }}
+          sx={{
+            whiteSpace: "pre-wrap",
+            fontFamily: "monospace",
+            fontSize: "0.875rem",
+            backgroundColor: "#f5f5f5",
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            overflowX: "auto",
+            border: "1px solid #e0e0e0",
+          }}
         >
           {codeTranslator(mapNodes, mapEdges)}
         </Typography>
