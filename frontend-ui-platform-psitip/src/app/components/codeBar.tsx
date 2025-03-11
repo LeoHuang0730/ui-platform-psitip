@@ -157,7 +157,14 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
       <AppBar position="static" color="secondary">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h5">Code</Typography>
+            <Typography 
+              variant="h5"
+              sx={{
+                fontFamily: "monospace",
+              }}
+            >
+              Code
+            </Typography>
           </Box>
           {/* Copy Button with Tooltip */}
           <Tooltip title={"Copied!"} open={copied} arrow>

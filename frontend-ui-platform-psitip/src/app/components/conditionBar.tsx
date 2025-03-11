@@ -24,7 +24,14 @@ const ConditionBar = ({additionalConditions, setAdditionalConditions} : SidebarR
 		<Box display={"flex"} flexDirection={"column"} height={"50%"}>
 			<AppBar position="static">
 				<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-					<Typography variant="h5">Conditions</Typography>
+					<Typography 
+						variant="h5"
+						sx={{
+							fontFamily: "monospace",
+						}}
+					>
+						Conditions
+					</Typography>
 					<FaPlus
 						style={{
 							cursor: "pointer",
@@ -52,7 +59,10 @@ const ConditionBar = ({additionalConditions, setAdditionalConditions} : SidebarR
 								newConditions[index] = e.target.value;
 								setAdditionalConditions(newConditions);
 							}}
-							sx={{ flex: 1 }}
+							sx={{ 
+								flex: 1, 
+								fontFamily: "monospace", 
+							}}
 						/>
 						<MdDelete
 							style={{ cursor: "pointer", margin: "8px" }}
