@@ -72,10 +72,14 @@ export default function Home() {
       width={"100vw"}
       flexDirection={"column"}
       borderRadius={"8px"}
+      style={{
+        overflow: "auto",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
     >
       <Topbar />
       <Box display="flex" flexDirection="row" height="100vh">
-        {/* Left Side: ReactflowPSITIP (Expands to fit available height) */}
         <Box flex={3} display="flex" minHeight={0} overflow="hidden">
           <ReactflowPSITIP
             mapNodes={mapNodes}
@@ -89,13 +93,17 @@ export default function Home() {
           />
         </Box>
 
-        {/* Right Side: ConditionBar + CodeBar (Scrolls when needed) */}
         <Box
           flex={1}
           display="flex"
           flexDirection="column"
           minHeight={0}
           overflow="auto"
+          style={{
+            overflow: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
         >
           <Box flexShrink={0}>
             <ConditionBar
@@ -111,10 +119,3 @@ export default function Home() {
     </Box>
   );
 }
-
-/* 
-Put hat on Decoded M
-Additional Information box
-Add source default S, decoded as S and can choose from sources.
-UI imporvements
-*/
