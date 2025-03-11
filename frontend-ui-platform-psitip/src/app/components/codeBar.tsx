@@ -154,7 +154,7 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
         height: "50%",
       }}
     >
-      <AppBar position="static">
+      <AppBar position="static" color="secondary">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h5">Code</Typography>
@@ -167,15 +167,7 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
           </Tooltip>
         </Toolbar>
       </AppBar>
-      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>          
-        <Typography variant="subtitle1">Test Your Code&nbsp;
-          <Link 
-            href="https://mybinder.org/v2/gh/cheuktingli/psitip/master?labpath=examples/table_of_contents.ipynb"
-            target="_blank"
-          >
-            Here
-          </Link>
-        </Typography>
+      <Box flexGrow={1} bgcolor={"lightblue"} p={2}>
         <Typography
           variant="body1"
           component="pre"
@@ -191,6 +183,29 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
           }}
         >
           {codeTranslator(mapNodes, mapEdges)}
+        </Typography>   
+        <Box height={"16px"} />       
+        <Typography
+            variant="body1"
+            component="pre"
+            sx={{
+              whiteSpace: "pre-wrap",
+              fontFamily: "monospace",
+              fontSize: "0.875rem",
+              backgroundColor: "#f5f5f5",
+              padding: "1rem",
+              borderRadius: "0.5rem",
+              overflowX: "auto",
+              border: "1px solid #e0e0e0",
+            }}
+            align="center"
+          >Test Your Code&nbsp;
+          <Link 
+            href="https://mybinder.org/v2/gh/cheuktingli/psitip/master?labpath=examples/table_of_contents.ipynb"
+            target="_blank"
+          >
+            Here
+          </Link>
         </Typography>
       </Box>
     </Box>
