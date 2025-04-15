@@ -19,6 +19,16 @@ interface codeBarProps {
 
 export const codeTranslator = (mapNodes: mapNode[], mapEdges: mapEdge[]): string => {
   let pythonCode = `# Auto-generated Python Code from ReactFlow Data Structure\n\n`;
+  
+  // Add PSITIP imports and settings
+  pythonCode += `from psitip import *\n\n`;
+  pythonCode += `PsiOpts.setting(\n`;
+  pythonCode += `    solver = "ortools.GLOP",    # Set linear programming solver\n`;
+  pythonCode += `    repr_latex = True,          # Jupyter Notebook LaTeX display\n`;
+  pythonCode += `    venn_latex = True,          # LaTeX in diagrams\n`;
+  pythonCode += `    proof_note_color = "blue",  # Reasons in proofs are blue\n`;
+  pythonCode += `    solve_display_reg = True,   # Display claims in solve commands\n`;
+  pythonCode += `)\n\n`;
 
   // Extract core variables (only base, not power)
   let coreVariables = mapNodes
