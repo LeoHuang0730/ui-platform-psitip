@@ -199,19 +199,19 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
               border: "1px solid #e0e0e0",
             }}
             align="center"
-          >Test Your Code&nbsp;
+          >Test Your Code at &nbsp;
           <Link 
             href="https://mybinder.org/v2/gh/cheuktingli/psitip/master?labpath=examples/table_of_contents.ipynb"
             target="_blank"
           >
-            Here
+            Jupyter Binder
           </Link>
           &nbsp;or&nbsp; 
           <Link 
             href="https://colab.research.google.com/github/cheuktingli/psitip/blob/master/examples/table_of_contents.ipynb"
             target="_blank"
           >
-            Here
+            Google Colab
           </Link>
         </Typography>   
         <Box height={"16px"} /> 
