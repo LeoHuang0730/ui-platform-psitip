@@ -206,6 +206,13 @@ const CodeBar = ({ mapNodes, mapEdges }: codeBarProps) => {
           >
             Here
           </Link>
+          &nbsp;or&nbsp; 
+          <Link 
+            href="https://colab.research.google.com/github/cheuktingli/psitip/blob/master/examples/table_of_contents.ipynb"
+            target="_blank"
+          >
+            Here
+          </Link>
         </Typography>   
         <Box height={"16px"} /> 
         <Typography
