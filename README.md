@@ -23,7 +23,7 @@ Step 2. Call directory to the folder ./frontend-ui-platform-psitip by the follow
 `cd PLACEHOLDER_FOR_YOUR_FOLDER_DIRECTORY/frontend-ui-platform-psitip`<br>  
 Step 3. Run the website by the following command:  
 `npm run dev`<br>  
-Step 4. Access the website by typing the URL in the browser:  
+Step 4. Access the website by typing the following URL in the browser:  
 `http://localhost:3000`<br>  
 
 ## Installing PSITIP locally
