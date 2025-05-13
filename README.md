@@ -1,4 +1,4 @@
-# User-friendly Platform for PSITIP
+# User-friendly Interactive Platform for PSITIP
 This project aims to develop a user-friendly platform for the Python Symbolic Information Theoretic Inequality Prover.  
 ## Installing Node.js
 The platform is a Next.js project such that installing Node.js in the system is necessary to run the platform.  
