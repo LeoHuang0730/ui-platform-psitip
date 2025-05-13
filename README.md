@@ -26,5 +26,5 @@ Step 4. Access the website by typing the URL in the browser:
 `http://localhost:3000`<br>  
 
 ## Installing PSITIP locally
-Check [Local Installation of PSITIP](https://github.com/cheuktingli/psitip?tab=readme-ov-file#installation-guide) for local installation of PSITIP.
+Check [PSITIP Local Installation Guide](https://github.com/cheuktingli/psitip?tab=readme-ov-file#installation-guide) for local installation of PSITIP.
 
