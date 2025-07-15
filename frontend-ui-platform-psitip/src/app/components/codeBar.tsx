@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   Box,
   Typography,
-  Button,
   AppBar,
   Toolbar,
   IconButton,
@@ -31,7 +30,7 @@ export const codeTranslator = (mapNodes: mapNode[], mapEdges: mapEdge[]): string
   pythonCode += `)\n\n`;
 
   // Extract core variables (only base, not power)
-  let coreVariables = mapNodes
+  const coreVariables = mapNodes
     .filter((node) => node.data.type === "variable")
     .map((node) => node.data.content.split("^")[0].trim());
 
@@ -39,10 +38,10 @@ export const codeTranslator = (mapNodes: mapNode[], mapEdges: mapEdge[]): string
     pythonCode += `${coreVariables.join(", ")} = rv("${coreVariables.join(", ")}")\n\n`;
   }
 
-  let sourceMessages: string[] = [];
-  let rateVariables: string[] = [];
-  let encoderNodes: string[] = [];
-  let decoderNodes: { [key: string]: { id: string; inputVar: string } } = {};
+  const sourceMessages: string[] = [];
+  const rateVariables: string[] = [];
+  const encoderNodes: string[] = [];
+  const decoderNodes: { [key: string]: { id: string; inputVar: string } } = {};
 
   // Step 1: Define Messages and Rates
   pythonCode += `# Step 1: Define Messages and Rates\n`;

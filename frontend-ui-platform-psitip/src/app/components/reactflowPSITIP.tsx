@@ -1,5 +1,5 @@
 "use client";
-import React, { CSSProperties, useEffect, useState, useCallback } from "react";
+import React, { CSSProperties, useState, useCallback, Dispatch, SetStateAction } from "react";
 import {
   Box,
   Typography,
@@ -7,8 +7,6 @@ import {
   Input,
   Select,
   MenuItem,
-  AppBar,
-  Toolbar,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -17,14 +15,14 @@ import {
 import {
   ReactFlow,
   Background,
-  Controls,
-  ControlButton,
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
   MarkerType,
-  Handle,
-  Position,
+  NodeChange,
+  EdgeChange,
+  Connection,
+  Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { RxCross1 } from "react-icons/rx";
@@ -36,13 +34,13 @@ import { mapNode, mapEdge } from "../page";
 
 interface ReactflowPSITIPProps {
   mapNodes: mapNode[];
-  setMapNodes: any;
+  setMapNodes: Dispatch<SetStateAction<mapNode[]>>;
   mapEdges: mapEdge[];
-  setMapEdges: any;
+  setMapEdges: Dispatch<SetStateAction<mapEdge[]>>;
   selectedNode: mapNode | null;
-  setSelectedNode: any;
+  setSelectedNode: Dispatch<SetStateAction<mapNode | null>>;
   lastBlockLength: number | string;
-  setLastBlockLength: any;
+  setLastBlockLength: Dispatch<SetStateAction<number | string>>;
 }
 
 // Add CSS styles at the top of the file
@@ -67,16 +65,14 @@ const ReactflowPSITIP = ({
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [editPosition, setEditPosition] = useState({ x: 0, y: 0 });
 
-  let variableSequence = ["X", "Y", "Z", "W", "T", "Q"];
-
   const onNodesChange = useCallback(
-    (changes: any) => setMapNodes((nds: mapNode[]) => applyNodeChanges(changes, nds)),
-    []
+    (changes: NodeChange[]) => setMapNodes((nds) => applyNodeChanges(changes, nds) as mapNode[]),
+    [setMapNodes]
   );
 
   const onEdgesChange = useCallback(
-    (changes: any) => setMapEdges((eds: mapEdge[]) => applyEdgeChanges(changes, eds)),
-    []
+    (changes: EdgeChange[]) => setMapEdges((eds) => applyEdgeChanges(changes, eds) as mapEdge[]),
+    [setMapEdges]
   );
 
   const onEdgesDelete = useCallback((edges: mapEdge[]) => {
@@ -109,189 +105,9 @@ const ReactflowPSITIP = ({
         })
       );
     });
-  }, []);
+  }, [setMapNodes]);
 
-  const onConnect = useCallback((params: any) => {
-    setMapEdges((eds: mapEdge[]) => addEdge(params, eds));
-    updateChannelLabel(params.source, params.target);
-  }, []);
-
-  const addMessageNode = useCallback(() => {
-    const messageNodes = mapNodes.filter(
-      (node) => node.data.type === "message"
-    );
-    const existingMessageNumbers = messageNodes
-      .map((node) => parseInt(node.id.replace("S", ""), 10))
-      .sort((a, b) => a - b);
-
-    let newMessageNumber = 1;
-    for (let i = 0; i < existingMessageNumbers.length; i++) {
-      if (existingMessageNumbers[i] !== newMessageNumber) {
-        break;
-      }
-      newMessageNumber++;
-    }
-
-    const newId = `S${newMessageNumber}`;
-    const newRate = `R${newMessageNumber}`;
-
-    setMapNodes((mapNodes: mapNode[]) => [
-      ...mapNodes,
-      {
-        id: newId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 0, y: messageNodes.length * 50 },
-        data: {
-          type: "message",
-          label: newId,
-          content: `Message ${newMessageNumber}`,
-          rate: newRate,
-        },
-      },
-    ]);
-  }, [mapNodes]);
-
-  const addVariableNode = useCallback(() => {
-    const variableNodes = mapNodes.filter(
-      (node) => node.data.type === "variable"
-    );
-
-    let nextVariableId = "X";
-
-    if (variableNodes.length > 0) {
-      const lastVariable = variableNodes[variableNodes.length - 1];
-      const lastVariableLabel = lastVariable.data.label;
-
-      const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
-
-      if (match) {
-        const [_, letter, blockLength] = match;
-        const nextBlockNumber = parseInt(blockLength) + 1;
-
-        nextVariableId = `${letter}_${nextBlockNumber}`;
-      } else {
-        const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
-        if (nextIndex < variableSequence.length) {
-          nextVariableId = variableSequence[nextIndex];
-        }
-      }
-    }
-
-    setMapNodes((mapNodes: mapNode[]) => [
-      ...mapNodes,
-      {
-        id: nextVariableId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 50, y: variableNodes.length * 50 },
-        data: {
-          type: "variable",
-          label: nextVariableId,
-          content:
-            lastBlockLength === "1"
-              ? `${nextVariableId}`
-              : `${nextVariableId}^${lastBlockLength}`,
-          rate: "",
-          blockLength: lastBlockLength,
-        },
-      },
-    ]);
-  }, [mapNodes, lastBlockLength]);
-
-  const addEncoderNode = useCallback(() => {
-    const encoderNodes = mapNodes.filter(
-      (node) => node.data.type === "encoder"
-    );
-    const encoderId = `Enc${encoderNodes.length + 1}`;
-    setMapNodes((mapNodes: mapNode[]) => [
-      ...mapNodes,
-      {
-        id: encoderId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 100, y: encoderNodes.length * 50 },
-        data: {
-          type: "encoder",
-          label: encoderId,
-          content: `Encoder ${encoderId}`,
-          rate: "",
-        },
-      },
-    ]);
-  }, [mapNodes]);
-
-  const addDecoderNode = useCallback(() => {
-    const decoderNodes = mapNodes.filter(
-      (node) => node.data.type === "decoder"
-    );
-    const decoderId = `Dec${decoderNodes.length + 1}`;
-    setMapNodes((mapNodes: mapNode[]) => [
-      ...mapNodes,
-      {
-        id: decoderId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 150, y: decoderNodes.length * 50 },
-        data: {
-          type: "decoder",
-          label: decoderId,
-          content: `Decoder ${decoderId}`,
-          rate: "",
-        },
-      },
-    ]);
-  }, [mapNodes]);
-
-  const addDecodedMessageNode = useCallback(() => {
-    const decodedMessageNodes = mapNodes.filter(
-      (node) => node.data.type === "decoded"
-    );
-    const decodedMessageId = `DM${
-      mapNodes.filter((node) => node.data.type === "decoded").length + 1
-    }`;
-    setMapNodes((mapNodes: mapNode[]) => [
-      ...mapNodes,
-      {
-        id: decodedMessageId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 200, y: decodedMessageNodes.length * 50 },
-        data: {
-          type: "decoded",
-          label: decodedMessageId,
-          content: `Decoded Message ${decodedMessageId}`,
-          rate: "",
-        },
-      },
-    ]);
-  }, [mapNodes]);
-
-  const addChannelNode = useCallback(() => {
-    const channelNodes = mapNodes.filter(
-      (node) => node.data.type === "channel"
-    );
-    const channelId = `C${channelNodes.length + 1}`;
-    setMapNodes((mapNodes: mapNode[]) => [
-      ...mapNodes,
-      {
-        id: channelId,
-        sourcePosition: "right",
-        targetPosition: "left",
-        position: { x: 250, y: channelNodes.length * 50 },
-        data: {
-          type: "channel",
-          label: "P( | )",
-          content: `Channel ${channelId}`,
-          rate: "",
-          inputs: [],
-          outputs: [],
-        },
-      },
-    ]);
-  }, [mapNodes]);
-
-  const updateChannelLabel = useCallback(
+    const updateChannelLabel = useCallback(
     (sourceId: string, targetId: string) => {
       setMapNodes((nodes: mapNode[]) =>
         nodes.map((node) => {
@@ -331,8 +147,194 @@ const ReactflowPSITIP = ({
         })
       );
     },
-    []
+    [setMapNodes]
   );
+
+  const onConnect = useCallback(
+    (params: Connection | Edge) => {
+      setMapEdges((eds: mapEdge[]) => addEdge(params, eds));
+      if ('source' in params && 'target' in params) {
+        updateChannelLabel(params.source, params.target);
+      }
+    },
+    [setMapEdges, updateChannelLabel]
+  );
+
+  const addMessageNode = useCallback(() => {
+    const messageNodes = mapNodes.filter(
+      (node) => node.data.type === "message"
+    );
+    const existingMessageNumbers = messageNodes
+      .map((node) => parseInt(node.id.replace("S", ""), 10))
+      .sort((a, b) => a - b);
+
+    let newMessageNumber = 1;
+    for (let i = 0; i < existingMessageNumbers.length; i++) {
+      if (existingMessageNumbers[i] !== newMessageNumber) {
+        break;
+      }
+      newMessageNumber++;
+    }
+
+    const newId = `S${newMessageNumber}`;
+    const newRate = `R${newMessageNumber}`;
+
+    setMapNodes((mapNodes: mapNode[]) => [
+      ...mapNodes,
+      {
+        id: newId,
+        sourcePosition: "right",
+        targetPosition: "left",
+        position: { x: 0, y: messageNodes.length * 50 },
+        data: {
+          type: "message",
+          label: newId,
+          content: `Message ${newMessageNumber}`,
+          rate: newRate,
+        },
+      },
+    ]);
+  }, [mapNodes, setMapNodes]);
+
+  const addVariableNode = useCallback(() => {
+    const variableSequence = ["X", "Y", "Z", "W", "T", "Q"];  
+    const variableNodes = mapNodes.filter(
+      (node) => node.data.type === "variable"
+    );
+
+    let nextVariableId = "X";
+
+    if (variableNodes.length > 0) {
+      const lastVariable = variableNodes[variableNodes.length - 1];
+      const lastVariableLabel = lastVariable.data.label;
+
+      const match = lastVariableLabel.match(/^([A-Z])_(\d+)$/);
+
+      if (match) {
+        const [letter, blockLength] = match;
+        const nextBlockNumber = parseInt(blockLength) + 1;
+
+        nextVariableId = `${letter}_${nextBlockNumber}`;
+      } else {
+        const nextIndex = variableSequence.indexOf(lastVariableLabel) + 1;
+        if (nextIndex < variableSequence.length) {
+          nextVariableId = variableSequence[nextIndex];
+        }
+      }
+    }
+
+    setMapNodes((mapNodes: mapNode[]) => [
+      ...mapNodes,
+      {
+        id: nextVariableId,
+        sourcePosition: "right",
+        targetPosition: "left",
+        position: { x: 50, y: variableNodes.length * 50 },
+        data: {
+          type: "variable",
+          label: nextVariableId,
+          content:
+            lastBlockLength === "1"
+              ? `${nextVariableId}`
+              : `${nextVariableId}^${lastBlockLength}`,
+          rate: "",
+          blockLength: lastBlockLength,
+        },
+      },
+    ]);
+  }, [mapNodes, lastBlockLength, setMapNodes]);
+
+  const addEncoderNode = useCallback(() => {
+    const encoderNodes = mapNodes.filter(
+      (node) => node.data.type === "encoder"
+    );
+    const encoderId = `Enc${encoderNodes.length + 1}`;
+    setMapNodes((mapNodes: mapNode[]) => [
+      ...mapNodes,
+      {
+        id: encoderId,
+        sourcePosition: "right",
+        targetPosition: "left",
+        position: { x: 100, y: encoderNodes.length * 50 },
+        data: {
+          type: "encoder",
+          label: encoderId,
+          content: `Encoder ${encoderId}`,
+          rate: "",
+        },
+      },
+    ]);
+  }, [mapNodes, setMapNodes]);
+
+  const addDecoderNode = useCallback(() => {
+    const decoderNodes = mapNodes.filter(
+      (node) => node.data.type === "decoder"
+    );
+    const decoderId = `Dec${decoderNodes.length + 1}`;
+    setMapNodes((mapNodes: mapNode[]) => [
+      ...mapNodes,
+      {
+        id: decoderId,
+        sourcePosition: "right",
+        targetPosition: "left",
+        position: { x: 150, y: decoderNodes.length * 50 },
+        data: {
+          type: "decoder",
+          label: decoderId,
+          content: `Decoder ${decoderId}`,
+          rate: "",
+        },
+      },
+    ]);
+  }, [mapNodes, setMapNodes]);
+
+  const addDecodedMessageNode = useCallback(() => {
+    const decodedMessageNodes = mapNodes.filter(
+      (node) => node.data.type === "decoded"
+    );
+    const decodedMessageId = `DM${
+      mapNodes.filter((node) => node.data.type === "decoded").length + 1
+    }`;
+    setMapNodes((mapNodes: mapNode[]) => [
+      ...mapNodes,
+      {
+        id: decodedMessageId,
+        sourcePosition: "right",
+        targetPosition: "left",
+        position: { x: 200, y: decodedMessageNodes.length * 50 },
+        data: {
+          type: "decoded",
+          label: decodedMessageId,
+          content: `Decoded Message ${decodedMessageId}`,
+          rate: "",
+        },
+      },
+    ]);
+  }, [mapNodes, setMapNodes]);
+
+  const addChannelNode = useCallback(() => {
+    const channelNodes = mapNodes.filter(
+      (node) => node.data.type === "channel"
+    );
+    const channelId = `C${channelNodes.length + 1}`;
+    setMapNodes((mapNodes: mapNode[]) => [
+      ...mapNodes,
+      {
+        id: channelId,
+        sourcePosition: "right",
+        targetPosition: "left",
+        position: { x: 250, y: channelNodes.length * 50 },
+        data: {
+          type: "channel",
+          label: "P( | )",
+          content: `Channel ${channelId}`,
+          rate: "",
+          inputs: [],
+          outputs: [],
+        },
+      },
+    ]);
+  }, [mapNodes, setMapNodes]);
 
   const updateNodeData = useCallback(
     (key: string, value: string) => {
@@ -344,7 +346,7 @@ const ReactflowPSITIP = ({
             : node
         )
       );
-      setSelectedNode((prev: mapNode) =>
+      setSelectedNode((prev: mapNode | null) =>
         prev ? { ...prev, data: { ...prev.data, [key]: value } } : null
       );
 
@@ -352,7 +354,7 @@ const ReactflowPSITIP = ({
         setLastBlockLength(value);
       }
     },
-    [selectedNode]
+    [selectedNode, setLastBlockLength, setMapNodes, setSelectedNode]
   );
 
   const getDecodeSequence = useCallback(
@@ -413,11 +415,7 @@ const ReactflowPSITIP = ({
       const [base, exponent] = content.split("^");
       
       if (exponent) {
-        return (
-          <InlineMath>
-            {`${base}^{${exponent}}`}
-          </InlineMath>
-        );
+        return `${base}^{${exponent}}`;
       }
     }
     return node.data.label;
@@ -519,6 +517,11 @@ const ReactflowPSITIP = ({
           type: "default",
           data: { 
             ...node.data, 
+            displayLabel: (
+              <InlineMath>
+                {getNodeLabel(node)}
+              </InlineMath>
+            ),
             label: getNodeLabel(node),
             sourceHandleStyle: customHandleStyles,
             targetHandleStyle: customHandleStyles,
