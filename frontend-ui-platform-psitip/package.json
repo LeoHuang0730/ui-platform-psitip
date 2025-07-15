@@ -2,7 +2,7 @@
   "name": "frontend-ui-platform-psitip",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://LeoHuang0730.github.io/ui-platform-psitip/frontend-ui-platform-psitip",
+  "homepage": "https://LeoHuang0730.github.io/ui-platform-psitip",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
